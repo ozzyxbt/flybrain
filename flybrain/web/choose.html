@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLYBRAIN · choose</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-page="choose">
+<header>
+  <div class="wordmark">FLYBRAIN<span>a fly brain launched a coin</span></div>
+  <nav><a class="active" href="/choose">/choose</a><a href="/coin">/coin</a><a href="/brain">/brain</a></nav>
+  <div class="spacer"></div>
+  <span class="badge" id="backend"></span>
+  <span class="badge" id="run-id"></span>
+  <span class="badge" id="verify">verifying…</span>
+</header>
+<main>
+  <div class="disclosure" id="disclosure"></div>
+  <section class="panel">
+    <h2>Categories · precommitted tournament</h2>
+    <div class="timeline" id="timeline"></div>
+  </section>
+  <div class="hero">
+    <section class="panel" id="match"><h2>Match</h2><div class="meta">select a match</div></section>
+    <div style="display:grid;gap:18px">
+      <section class="panel"><h2>Final decision</h2><div id="final"></div></section>
+      <section class="panel"><h2>Launch</h2><div id="launch"></div></section>
+      <section class="panel"><h2>Commitments</h2>
+        <dl class="kv"><dt>manifest</dt><dd class="hash" id="manifest-hash"></dd><dt>checkpoint</dt><dd class="hash" id="checkpoint-hash"></dd><dt>software</dt><dd class="hash" id="commit"></dd></dl>
+      </section>
+    </div>
+  </div>
+  <section class="panel">
+    <h2>All matches · WAIT and NO_DECISION are shown as recorded</h2>
+    <table><thead><tr><th>category</th><th>round</th><th>match</th><th>attempts</th><th>result</th><th>hash</th></tr></thead><tbody id="matches"></tbody></table>
+  </section>
+  <section class="panel">
+    <h2>Memo commitments (Solana Memo payloads; local until Gate B)</h2>
+    <table><thead><tr><th>kind</th><th>sha256</th><th>memo</th><th>tx</th></tr></thead><tbody id="commitments"></tbody></table>
+  </section>
+</main>
+<footer>166,700 neurons. One terrible idea. · The fly chose among precommitted alternatives using a fixed, published neural decoding protocol. · <a href="/run/chain.jsonl">chain.jsonl</a> · <a href="/api/bundle.zip">download audit bundle</a></footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+{
+  "protocol": "fly-choice-v1",
+  "manifest_id": "genesis-v1",
+  "baseline_commit": "78ef3e05ab0fa086032098558d893667068944a0",
+  "backend": "fixture-brain-v1",
+  "brain_checkpoint_sha256": "FILLED_BY_manifest-canonicalize_--checkpoint",
+  "learning_frozen": true,
+  "neural_window_ms": 500,
+  "decoder_threshold_hz": "2.0",
+  "max_attempts_per_match": 3,
+  "attempt_variants": ["standard", "high_contrast", "large"],
+  "frame": {"width": 320, "height": 180},
+  "launch_windows": {"max_windows": 3, "interval_seconds": 3600},
+  "venue_selection_mode": "simulation",
+  "category_order": ["name", "ticker", "logo", "palette", "description", "launch_venue", "launch_action"],
+  "categories": {
+    "name": [
+      {"id": "name-flybrain", "text": "FLYBRAIN"},
+      {"id": "name-neurofly", "text": "NEUROFLY"},
+      {"id": "name-ganglion", "text": "GANGLION"},
+      {"id": "name-proboscis", "text": "PROBOSCIS"},
+      {"id": "name-synapse", "text": "SYNAPSE"},
+      {"id": "name-ommatidia", "text": "OMMATIDIA"}
+    ],
+    "ticker": [
+      {"id": "tick-fly", "text": "FLY"},
+      {"id": "tick-brain", "text": "BRAIN"},
+      {"id": "tick-buzz", "text": "BUZZ"},
+      {"id": "tick-neuron", "text": "NEURON"},
+      {"id": "tick-spike", "text": "SPIKE"},
+      {"id": "tick-wings", "text": "WINGS"}
+    ],
+    "logo": [
+      {"id": "logo-fly", "label": "FLY", "fg": "#f8fafc", "bg": "#0b1120",
+       "pixels": ["..#..#..", ".######.", "##.##.##", "#..##..#", "..####..", ".##..##.", "#......#", "........"]},
+      {"id": "logo-brain", "label": "BRAIN", "fg": "#fda4af", "bg": "#1a0b0f",
+       "pixels": ["..####..", ".#.##.#.", "##.##.##", "#.####.#", "#..##..#", ".######.", "..#..#..", "...##..."]},
+      {"id": "logo-eye", "label": "EYE", "fg": "#e11d48", "bg": "#f8fafc",
+       "pixels": ["..####..", ".#....#.", "#..##..#", "#.####.#", "#..##..#", ".#....#.", "..####..", "........"]},
+      {"id": "logo-spike", "label": "SPIKE", "fg": "#bef264", "bg": "#052e16",
+       "pixels": ["....##..", "...##...", "..##....", ".######.", "....##..", "...##...", "..##....", ".#......"]}
+    ],
+    "palette": [
+      {"id": "pal-terminal", "label": "LAB TERMINAL", "colors": ["#0b1120", "#38bdf8", "#f8fafc"]},
+      {"id": "pal-ruby", "label": "RUBY EYE", "colors": ["#1a0b0f", "#e11d48", "#fda4af", "#fff1f2"]},
+      {"id": "pal-acid", "label": "ACID GREEN", "colors": ["#052e16", "#22c55e", "#bef264", "#f7fee7"]},
+      {"id": "pal-amber", "label": "AMBER GLOW", "colors": ["#1c1917", "#f59e0b", "#fde68a"]}
+    ],
+    "description": [
+      {"id": "desc-receipts", "text": "A FLY BRAIN CHOSE THIS COIN FROM A LIST. THE CHAIN KEEPS THE RECEIPTS."},
+      {"id": "desc-neurons", "text": "166,700 NEURONS. ONE TERRIBLE IDEA."},
+      {"id": "desc-flies", "text": "FORGET AI. WE HAVE FLIES NOW."},
+      {"id": "desc-spikes", "text": "SELECTED BY SPIKES, NOT BY A HUMAN OR AN LLM."}
+    ],
+    "launch_venue": [
+      {"id": "pumpfun", "text": "PUMP.FUN"},
+      {"id": "pons", "text": "PONS"}
+    ],
+    "launch_action": [
+      {"id": "launch", "text": "LAUNCH"},
+      {"id": "wait", "text": "WAIT"}
+    ]
+  },
+  "disclosure": "The fly selected among authored, precommitted candidates using a fixed, published neural decoding protocol. It did not generate language, understand money or form intentions. A pre-approved execution system submitted the resulting launch transaction."
+}

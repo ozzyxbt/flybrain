@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flybrain"
+version = "0.1.0"
+description = "A verifiable fly-connectome system that selects a memecoin identity from precommitted candidates and records a hash-chained audit trail"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy==2.4.6", "pandas==3.0.5", "pyarrow==25.0.1", "Pillow==12.3.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest==9.1.1"]
+
+[project.scripts]
+flybrain = "flybrain.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["flybrain*"]
+
+[tool.setuptools.package-data]
+"flybrain.neural" = ["*.cpp", "*.json"]
+"flybrain" = ["web/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

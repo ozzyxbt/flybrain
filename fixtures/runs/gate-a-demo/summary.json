@@ -1,0 +1,24 @@
+{
+  "run_id": "gate-a-demo",
+  "manifest_sha256": "55ea1efc124064e454a5967fcfc1508ce4b1477f50e7e7d0a9fd05fb9d3dd5b2",
+  "checkpoint_sha256": "fff4c787052fad94d3dd4cd935412b51f90c46c222b69b31622d7b5692cefc4b",
+  "backend": "fixture-brain-v1",
+  "final_decision_sha256": "76dc2d0724209c5d5b7768d1e8001b4c9f0b10dd8d578bbd13ba0532adb16948",
+  "identity": {
+    "name": "name-ommatidia",
+    "ticker": "tick-neuron",
+    "logo": "logo-eye",
+    "palette": "pal-acid",
+    "description": "desc-receipts"
+  },
+  "launch_venue": "pumpfun",
+  "launch_action": "launch",
+  "outcome": "LAUNCH",
+  "launch": {
+    "status": "CONFIRMED",
+    "mint": "6AHCW58gAHL56yHk2L8vzgPfjVf3hCiksit4gTFNCyoV",
+    "receipt_sha256": "531b9a0409f32936cfac12cb0af93e6ed69d368eeb25005f94afef2a69038c1d"
+  },
+  "chain_head": "531b9a0409f32936cfac12cb0af93e6ed69d368eeb25005f94afef2a69038c1d",
+  "chain_length": 66
+}

@@ -1,0 +1,23 @@
+{
+  "run_id": "genesis-v1",
+  "manifest_sha256": "c91ee4d2800088bba75527d9d2b24118d113a7a1353df5997b34774a75652c6b",
+  "checkpoint_sha256": "fff4c787052fad94d3dd4cd935412b51f90c46c222b69b31622d7b5692cefc4b",
+  "backend": "fixture-brain-v1",
+  "final_decision_sha256": "023fd3d9ed274023cf17131e539bcbdc06d26564d294754ab2f7ff97616629e9",
+  "identity": {
+    "name": null,
+    "ticker": "tick-neuron",
+    "logo": "logo-eye",
+    "palette": "pal-acid",
+    "description": "desc-receipts"
+  },
+  "launch_venue": null,
+  "launch_action": null,
+  "outcome": "NO_LAUNCH",
+  "launch": {
+    "status": "NOT_ATTEMPTED",
+    "reason": "identity incomplete: name"
+  },
+  "chain_head": "023fd3d9ed274023cf17131e539bcbdc06d26564d294754ab2f7ff97616629e9",
+  "chain_length": 62
+}

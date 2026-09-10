@@ -1,0 +1,12 @@
+{
+  "model": "fixture-brain-v1",
+  "note": "Deterministic stand-in for Gate A. NOT a connectome. Content-responsive readout over the two card interiors, an idiosyncratic content 'taste' term, and a persistent left bias so the mirrored protocol is exercised.",
+  "base_hz": "6.0",
+  "left_bias_hz": "1.5",
+  "luminance_gain_hz": "60.0",
+  "green_gain_hz": "30.0",
+  "edge_gain_hz": "1500.0",
+  "taste_gain_hz": "6.0",
+  "gate_contrast_threshold": "0.02",
+  "jitter_hz": "0.75"
+}

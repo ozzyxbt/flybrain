@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLYBRAIN · coin</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-page="coin">
+<header>
+  <div class="wordmark">FLYBRAIN<span>the fly chose the coin. the chain keeps the receipts.</span></div>
+  <nav><a href="/choose">/choose</a><a class="active" href="/coin">/coin</a><a href="/brain">/brain</a></nav>
+  <div class="spacer"></div>
+  <span class="badge" id="backend"></span>
+  <span class="badge" id="run-id"></span>
+  <span class="badge" id="verify">verifying…</span>
+</header>
+<main>
+  <div class="disclosure" id="disclosure"></div>
+  <div class="grid2">
+    <section class="panel"><h2>Fly-selected identity · from precommitted candidates</h2><div id="identity" style="display:grid;gap:12px"></div></section>
+    <section class="panel"><h2>Launch status, authorities and routing</h2><div id="status"></div></section>
+  </div>
+  <section class="panel"><h2>Audit</h2>
+    <p>Every number on this page is read from the hash-chained run directory. <a href="/api/bundle.zip">Download the audit bundle</a> and run <code>flybrain verify-run &lt;dir&gt;</code>; it exits nonzero on any mismatch.</p>
+  </section>
+</main>
+<footer>No return, profit, price-support or consciousness claims. The fly must not trade its own token.</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>
