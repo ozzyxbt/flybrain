@@ -213,7 +213,7 @@
   }
   const DIM_BIG = [0.14, 0.23, 0.38], DIM_SMALL = [0.03, 0.06, 0.12], HOT = [0.75, 0.95, 0.39], CELL = { left: [0.22, 0.74, 0.97], right: [0.22, 0.74, 0.97], gate: [0.98, 0.75, 0.14] };
   function animateBrain(t, dt) {
-    brain.rotation.y += (B.dragging ? 0 : 0.0025) * dt * 60 / 1000 * 16;
+    if (B.autoRotate && !B.dragging) brain.rotation.y += 0.0025 * dt / 16;
     if (!B.points) return;
     const c = B.colors, hc = B.hiColors, DIM = B.big ? DIM_BIG : DIM_SMALL;
     for (let i = 0; i < B.n; i++) {
@@ -229,7 +229,9 @@
     B.points.geometry.attributes.color.needsUpdate = true;
     B.hi.geometry.attributes.color.needsUpdate = true;
   }
-  // drag to rotate the brain
+  // drag to rotate the brain; auto-rotate is opt-in
+  B.autoRotate = false;
+  const rotBox = $("#brain-rotate"); if (rotBox) rotBox.onchange = (e) => (B.autoRotate = e.target.checked);
   let drag = null;
   renderer.domElement.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY }; B.dragging = true; });
   window.addEventListener("pointerup", () => { drag = null; B.dragging = false; });
