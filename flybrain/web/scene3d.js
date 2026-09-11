@@ -40,6 +40,9 @@
   key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -2;
   scene.add(key);
   const glow = new T.PointLight(0xdbe5f9, 0.5, 4); glow.position.set(0, 1.9, -0.2); scene.add(glow);
+  const rim = new T.DirectionalLight(0xd1f6e0, 0.9); rim.position.set(-3, 3, -4); scene.add(rim);
+  const spot = new T.SpotLight(0xfff3d6, 3.2, 8, 0.5, 0.6, 1.2); spot.position.set(0.4, 4.2, 1.6); spot.target.position.set(0, 1.2, 0.45); spot.castShadow = true; scene.add(spot, spot.target);
+  const fill = new T.DirectionalLight(0xf5ffe5, 0.35); fill.position.set(3, 2, 4); scene.add(fill);
 
   // --------------------------------------------------------------- room
   const M = (o) => new T.MeshStandardMaterial(o);
@@ -80,60 +83,79 @@
   // ---------------------------------------------------------------- fly
   const fly = new T.Group(); scene.add(fly);
   const flyParts = {};
-  (function buildFly() {
-    const body = M({ color: 0x8a94a8, roughness: 0.55, metalness: 0.08 });
-    const dark = M({ color: 0x5b6472, roughness: 0.6 });
-    const eyeMat = M({ color: 0xe11d48, emissive: 0x7f1d1d, emissiveIntensity: 0.6, roughness: 0.25 });
-    const stripes = document.createElement("canvas"); stripes.width = 128; stripes.height = 16;
-    const sc = stripes.getContext("2d"); sc.fillStyle = "#6c778c"; sc.fillRect(0, 0, 128, 16); sc.fillStyle = "#2f3646";
-    for (let i = 0; i < 5; i++) sc.fillRect(14 + i * 22, 0, 8, 16);
-    const stripeTex = new T.CanvasTexture(stripes); stripeTex.colorSpace = T.SRGBColorSpace;
-    const abdMat = M({ map: stripeTex, roughness: 0.6 });
-    const add = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; fly.add(m); return m; };
-    add(new T.SphereGeometry(0.16, 32, 24), body, 0.30, 0.06, 0);
-    add(new T.SphereGeometry(0.095, 24, 18), eyeMat, 0.36, 0.09, 0.115, 1, 1.15, 0.9);
-    add(new T.SphereGeometry(0.095, 24, 18), eyeMat, 0.36, 0.09, -0.115, 1, 1.15, 0.9);
-    add(new T.SphereGeometry(0.2, 32, 24), body, 0.05, 0.1, 0, 1.15, 0.95, 0.95);
-    add(new T.SphereGeometry(0.18, 32, 24), abdMat, -0.38, 0.03, 0, 2.0, 0.9, 0.95);
-    for (const z of [0.06, -0.06]) { const a = add(new T.CylinderGeometry(0.008, 0.012, 0.22, 6), dark, 0.42, 0.2, z * 1.4); a.rotation.z = -0.9; a.rotation.x = z > 0 ? -0.4 : 0.4; }
-    // wings: pivot groups at the wing roots
-    const wingMat = new T.MeshPhysicalMaterial({ color: 0xc8dcf8, transparent: true, opacity: 0.32, roughness: 0.1, metalness: 0.2, side: T.DoubleSide, depthWrite: false });
-    flyParts.wings = [];
-    for (const side of [1, -1]) {
-      const pivot = new T.Group(); pivot.position.set(0.05, 0.27, side * 0.08); fly.add(pivot);
-      const wing = new T.Mesh(new T.PlaneGeometry(0.72, 0.26), wingMat);
-      wing.rotation.x = Math.PI / 2; wing.position.set(-0.3, 0, side * 0.2); wing.rotation.y = side * 0.25; pivot.add(wing);
-      const vein = new T.Mesh(new T.CylinderGeometry(0.004, 0.004, 0.7, 4), dark); vein.rotation.z = Math.PI / 2; vein.position.set(-0.3, 0.002, side * 0.14); pivot.add(vein);
-      flyParts.wings.push({ pivot, side });
-    }
-    // legs: six two-segment legs, positioned each frame between joint points
-    const legMat = M({ color: 0x3c4458, roughness: 0.7 });
-    flyParts.legs = [];
-    const roots = [[0.2, 0.0, 0.12], [0.06, -0.02, 0.15], [-0.1, 0.0, 0.14]];
-    for (const side of [1, -1]) for (const r of roots) {
-      const upper = new T.Mesh(new T.CylinderGeometry(0.014, 0.011, 1, 6), legMat), lower = new T.Mesh(new T.CylinderGeometry(0.011, 0.006, 1, 6), legMat);
-      upper.castShadow = lower.castShadow = true; fly.add(upper, lower);
-      flyParts.legs.push({ root: new T.Vector3(r[0], r[1], r[2] * side), side, upper, lower, i: flyParts.legs.length });
-    }
-    fly.scale.setScalar(0.9);
-  })();
+  // Original low-poly Drosophila: faceted flat-shaded parts, +x is forward.
+  const flat = (color, extra = {}) => new T.MeshStandardMaterial({ color, flatShading: true, roughness: 0.55, metalness: 0.28, ...extra });
+  const ico = (sx, sy, sz, mat, x, y, z, parent, detail = 2) => { const m = new T.Mesh(new T.IcosahedronGeometry(1, detail), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; parent.add(m); return m; };
+  const rodGeo = new T.CylinderGeometry(0.85, 1, 1, 6);
+  function rod(parent, a, b, radius, mat) { const m = new T.Mesh(rodGeo, mat); m.castShadow = true; parent.add(m); place(m, a, b, radius); return m; }
   const _a = new T.Vector3(), _b = new T.Vector3(), _m = new T.Vector3(), _up = new T.Vector3(0, 1, 0);
-  function setCylinder(mesh, a, b) {
-    _m.addVectors(a, b).multiplyScalar(0.5); mesh.position.copy(_m);
-    _b.subVectors(b, a); const len = _b.length(); mesh.scale.set(1, len, 1);
+  function place(mesh, a, b, radius) {
+    _a.set(a[0], a[1], a[2]); _b.set(b[0], b[1], b[2]);
+    _m.addVectors(_a, _b).multiplyScalar(0.5); mesh.position.copy(_m);
+    _b.sub(_a); const len = _b.length(); mesh.scale.set(radius, len, radius);
     mesh.quaternion.setFromUnitVectors(_up, _b.normalize());
   }
+  const seed = (n) => { const x = Math.sin(n * 91.7 + 17.3) * 43758.5453; return x - Math.floor(x); };
+  (function buildFly() {
+    const shell = flat(0x3a505a), shellLight = flat(0x54687a), dark = flat(0x161d22, { metalness: 0.12 });
+    const eyeMat = flat(0xa5183a, { roughness: 0.3, metalness: 0.4, emissive: 0x3a0512, emissiveIntensity: 0.45 });
+    const chitin = flat(0x24363d, { metalness: 0.22, roughness: 0.6 });
+    // abdomen with segment rings
+    ico(0.46, 0.2, 0.22, chitin, -0.4, -0.01, 0, fly);
+    for (let i = 0; i < 4; i++) { const ring = new T.Mesh(new T.TorusGeometry(0.19 - i * 0.02, 0.018, 4, 14), flat([0x33484a, 0x3d4a42, 0x2f4448, 0x3a4340][i])); ring.position.set(-0.3 - i * 0.09, 0, 0); ring.rotation.y = Math.PI / 2; ring.scale.z = 0.95; ring.castShadow = true; fly.add(ring); }
+    // thorax and bristles
+    ico(0.34, 0.27, 0.26, shell, -0.02, 0.05, 0, fly);
+    for (let i = 0; i < 48; i++) { const a = seed(i) * Math.PI * 2, b = seed(i + 100) * Math.PI * 0.5; const px = -0.02 + Math.cos(a) * Math.sin(b) * 0.33, py = 0.05 + Math.cos(b) * 0.27, pz = Math.sin(a) * Math.sin(b) * 0.25; rod(fly, [px, py, pz], [px * 1.1 + 0.02, py + 0.05 + seed(i + 7) * 0.04, pz * 1.12], 0.004, dark); }
+    // head: faceted, big compound eyes, ocelli, antennae, proboscis
+    const head = new T.Group(); head.position.set(0.32, 0.1, 0); fly.add(head); flyParts.head = head;
+    ico(0.2, 0.19, 0.19, shellLight, 0, 0, 0, head);
+    for (const side of [1, -1]) {
+      ico(0.14, 0.18, 0.125, eyeMat, 0.06, 0.02, 0.14 * side, head, 2);
+      ico(0.03, 0.022, 0.022, flat(0xe7a8a0, { roughness: 0.15, emissive: 0x7a3f55 }), 0.1, 0.12, 0.23 * side, head, 1);
+      rod(head, [0.14, 0.14, 0.06 * side], [0.3, 0.26, 0.15 * side], 0.007, dark);
+      ico(0.02, 0.014, 0.014, dark, 0.3, 0.26, 0.15 * side, head, 1);
+    }
+    rod(head, [0.12, -0.1, 0], [0.24, -0.2, 0], 0.024, shell); ico(0.03, 0.04, 0.055, dark, 0.24, -0.2, 0, head, 1);
+    // wings: veined translucent fans on pivots at the roots
+    const wingMat = flat(0xa9dce2, { transparent: true, opacity: 0.45, side: T.DoubleSide, roughness: 0.2, metalness: 0.5 });
+    const veinMat = new T.MeshStandardMaterial({ color: 0x77999b, transparent: true, opacity: 0.7, metalness: 0.5 });
+    flyParts.wings = [];
+    for (const side of [1, -1]) {
+      const pivot = new T.Group(); pivot.position.set(-0.1, 0.22, 0.12 * side); fly.add(pivot);
+      const pts = [[0, 0, 0], [-0.38, 0.03, 0.2 * side], [-0.88, 0.0, 0.56 * side], [-1.04, -0.02, 0.54 * side], [-1.13, -0.02, 0.42 * side], [-0.9, -0.015, 0.21 * side], [-0.34, -0.008, 0.015 * side]];
+      const verts = []; for (let i = 1; i < pts.length - 1; i++) verts.push(...pts[0], ...pts[i], ...pts[i + 1]);
+      const geo = new T.BufferGeometry(); geo.setAttribute("position", new T.Float32BufferAttribute(verts, 3)); geo.computeVertexNormals();
+      const membrane = new T.Mesh(geo, wingMat); pivot.add(membrane);
+      const outline = [...pts, pts[0]]; for (let j = 0; j < outline.length - 1; j++) rod(pivot, outline[j], outline[j + 1], 0.005, veinMat);
+      for (let j = 2; j < 6; j++) rod(pivot, [-0.05, 0, 0.012 * side], pts[j], 0.0035, veinMat);
+      rod(pivot, [-0.42, 0.005, 0.16 * side], [-0.63, 0.012, 0.36 * side], 0.0035, veinMat);
+      flyParts.wings.push({ pivot, side });
+    }
+    // legs: root -> knee -> ankle -> foot, posed each frame
+    const legMat = flat(0x243239, { metalness: 0.38, roughness: 0.48 });
+    flyParts.legs = [];
+    const roots = [[0.17, -0.08, 0.14], [-0.02, -0.11, 0.16], [-0.22, -0.08, 0.14]];
+    for (const side of [1, -1]) roots.forEach((r, k) => {
+      const upper = rod(fly, [0, 0, 0], [0, 1, 0], 0.017, legMat), lower = rod(fly, [0, 0, 0], [0, 1, 0], 0.011, legMat), foot = rod(fly, [0, 0, 0], [0, 1, 0], 0.006, dark);
+      const knee = ico(0.028, 0.028, 0.028, shell, 0, 0, 0, fly, 1);
+      flyParts.legs.push({ root: [r[0], r[1], r[2] * side], side, k, upper, lower, foot, knee, i: flyParts.legs.length });
+    });
+    fly.scale.setScalar(0.95);
+  })();
   function animateFly(t, moving, mode) {
     const flapping = moving || mode === "party" || mode === "press";
-    const flap = flapping ? Math.sin(t / 22) * 0.75 : 0.18 + Math.sin(t / 900) * 0.05 + (Math.floor(t / 1600) % 4 === 0 ? Math.sin(t / 26) * 0.5 : 0);
+    const flap = flapping ? Math.sin(t / 22) * 0.75 : 0.12 + Math.sin(t / 900) * 0.04 + (Math.floor(t / 1600) % 4 === 0 ? Math.sin(t / 26) * 0.5 : 0);
     for (const w of flyParts.wings) w.pivot.rotation.x = -w.side * flap;
+    if (flyParts.head) flyParts.head.rotation.y = Math.sin(t / 700) * 0.08;
     for (const L of flyParts.legs) {
       const ph = moving ? t / 55 + L.i * 2.1 : 0;
-      const swing = moving ? Math.sin(ph) * 0.12 : 0, liftLeg = moving ? Math.max(0, Math.cos(ph)) * 0.06 : 0;
-      _a.copy(L.root);
-      const knee = new T.Vector3(L.root.x + swing * 0.6, L.root.y + 0.16, L.root.z + L.side * 0.2);
-      const foot = new T.Vector3(L.root.x + swing, -0.34 + liftLeg, L.root.z + L.side * 0.34);
-      setCylinder(L.upper, _a, knee); setCylinder(L.lower, knee, foot);
+      const swing = moving ? Math.sin(ph) * 0.1 : 0, up = moving ? Math.max(0, Math.cos(ph)) * 0.06 : 0;
+      const r = L.root, s = L.side, spread = 0.36 - Math.abs(L.k - 1) * 0.04;
+      const knee = [r[0] + swing * 0.6 + (L.k - 1) * -0.12, r[1] + 0.14, r[2] + s * 0.22];
+      const ankle = [r[0] + swing + (L.k - 1) * -0.2, -0.38 + up, r[2] + s * spread];
+      const foot = [ankle[0] + 0.12, -0.4 + up * 0.5, ankle[2] + s * 0.04];
+      place(L.upper, r, knee, 0.017); place(L.lower, knee, ankle, 0.011); place(L.foot, ankle, foot, 0.006);
+      L.knee.position.set(knee[0], knee[1], knee[2]);
     }
   }
 
@@ -376,7 +398,7 @@
     if (moving) lift = Math.abs(Math.sin(t / 70)) * 0.02;
     if (f.mode === "party") lift = Math.abs(Math.sin(t / 130)) * 0.5;
     if (f.mode === "press") lift = -0.03;
-    fly.position.set(f.x, 1.24 + lift, 0.45); fly.rotation.y = f.yaw;
+    fly.position.set(f.x, 1.27 + lift, 0.45); fly.rotation.y = f.yaw;
     animateFly(t, moving, f.mode);
     for (const side of ["LEFT", "RIGHT"]) { const b = buttons[side], down = S.pressed === side && now() < S.pressUntil; b.cap.position.y += ((down ? 0.06 : 0.12) - b.cap.position.y) * 0.4; b.cap.material.emissiveIntensity = down ? 1.2 : 0.15; }
     animateCNS(t, dt);
