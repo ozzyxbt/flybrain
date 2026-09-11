@@ -288,5 +288,6 @@
   }
 
   const page = document.body.dataset.page;
+  if (page === "live") return;
   ({ choose, coin, brain })[page]().catch((e) => { const w = $("#verify"); w.textContent = "ERROR " + e; w.className = "badge bad"; });
 })();

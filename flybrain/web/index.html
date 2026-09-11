@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLYBRAIN</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  main.scene { max-width: 1100px; gap: 12px; }
+  .stage { position: relative; background: #05070c; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  canvas#scene { display: block; width: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .controls .spacer { flex: 1; }
+  .tape { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; border-top: 1px solid var(--line); padding: 6px 12px; background: #070a12; }
+  .tape span { color: var(--cyan); }
+  .replay { font-size: 11px; letter-spacing: 0.14em; color: var(--amber); border: 1px solid var(--amber); padding: 2px 8px; border-radius: 4px; }
+  .tagline { font-size: 22px; font-weight: 800; letter-spacing: 0.06em; margin: 0; }
+  .tagline small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+</style>
+</head>
+<body data-page="live">
+<header>
+  <div class="wordmark">FLYBRAIN<span>a fly brain launched a coin</span></div>
+  <nav><a class="active" href="/">/live</a><a href="/choose">/choose</a><a href="/coin">/coin</a><a href="/brain">/brain</a></nav>
+  <div class="spacer"></div>
+  <span class="badge" id="backend"></span>
+  <span class="badge" id="run-id"></span>
+  <span class="badge" id="verify">verifying…</span>
+</header>
+<main class="scene">
+  <p class="tagline">166,700 NEURONS. ONE TERRIBLE IDEA.<small id="disclosure"></small></p>
+  <div class="stage">
+    <canvas id="scene" width="640" height="320"></canvas>
+    <div class="tape" id="tape">loading the chain…</div>
+  </div>
+  <div class="controls">
+    <span class="replay" id="mode">REPLAY OF HASH-CHAINED RUN</span>
+    <button id="play">▶ play</button>
+    <button id="step">⏭ step</button>
+    <button id="end">⏩ skip to end</button>
+    <label>speed <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+    <span class="spacer"></span>
+    <span class="meta" id="progress"></span>
+  </div>
+  <div class="meta">Every frame the fly sees, every spike count and every left/right rate on this stage is read from the run's chained artifacts (<a href="/run/chain.jsonl">chain.jsonl</a>). The fixture backend is a deterministic stand-in, not the connectome. Price reactions and viewer-driven emotes are not part of this build.</div>
+</main>
+<footer>The fly chose among precommitted alternatives using a fixed, published neural decoding protocol. Not consciousness; profitable learning not demonstrated.</footer>
+<script src="/static/app.js"></script>
+<script src="/static/scene.js"></script>
+</body>
+</html>

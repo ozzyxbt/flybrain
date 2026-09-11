@@ -14,7 +14,7 @@ pip install -e '.[test]'
 python -m pytest -q
 flybrain run --manifest manifests/gate-a-demo-v1.json --out runs/demo --run-id gate-a-demo
 flybrain verify-run runs/demo --resimulate
-flybrain serve --run runs/demo            # http://127.0.0.1:8787/choose
+flybrain serve --run runs/demo            # http://127.0.0.1:8787/  (pixel-art replay), /choose, /coin, /brain
 ```
 
 No wallet, network or dataset needed. Runs use the `fixture-brain-v1` backend (a deterministic stand-in, **not** the connectome) and the `mock` launch adapter (no real token). `LIVE_LAUNCH=false` / `NETWORK=mock` are the defaults and mainnet is unreachable from this build.
@@ -35,7 +35,7 @@ Set `"backend": "malecns-connectome"` in the draft. The connectome path was not 
 
 ## Layout
 
-`flybrain/neural` retained core · `choice/` manifest, renderer, decoder, tournament, transcript, backends · `commitments/` canonical JSON, hash chain, memo payloads · `launch/` adapter interface, mock, gated placeholders · `risk/` veto-only guard · `verifier/` · `dashboard.py` + `web/` (`/choose`, `/coin`, `/brain`) · `manifests/` · `docs/`.
+`flybrain/neural` retained core · `choice/` manifest, renderer, decoder, tournament, transcript, backends · `commitments/` canonical JSON, hash chain, memo payloads · `launch/` adapter interface, mock, gated placeholders · `risk/` veto-only guard · `verifier/` · `dashboard.py` + `web/` (`/` pixel-art replay of the chained run: the fly at its desk, the exact trial frame on its monitor, readout cells lit from the stored spike counts, LEFT/RIGHT presses per the recorded readout, coin reveal on launch; `/choose`, `/coin`, `/brain` data views) · `manifests/` · `docs/`.
 
 ## License
 

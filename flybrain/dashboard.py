@@ -15,7 +15,7 @@ from .commitments.hashchain import walk
 from .commitments.solana_memo import read_commitments
 
 WEB = Path(__file__).with_name("web")
-PAGES = {"/": "choose.html", "/choose": "choose.html", "/coin": "coin.html", "/brain": "brain.html"}
+PAGES = {"/": "index.html", "/live": "index.html", "/choose": "choose.html", "/coin": "coin.html", "/brain": "brain.html"}
 
 
 def index(run_dir: Path) -> dict:
