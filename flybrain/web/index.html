@@ -6,7 +6,14 @@
 <title>FLYBRAIN</title>
 <link rel="stylesheet" href="/static/style.css">
 <style>
-  main.scene { max-width: 1180px; gap: 12px; }
+  main.scene { max-width: 1320px; gap: 12px; }
+  .live-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; align-items: start; }
+  .stage.cns { display: grid; grid-template-rows: auto 1fr 1fr; background: #000; }
+  .cns-head { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .cns-view { position: relative; }
+  .cns-view canvas { display: block; width: 100%; aspect-ratio: 2 / 1; background: #000; }
+  .cns-view .cap { position: absolute; left: 10px; bottom: 6px; font-size: 10px; color: var(--muted); }
+  @media (max-width: 900px) { .live-grid { grid-template-columns: 1fr; } }
   .stage { position: relative; background: #05070c; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   #stage3d { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #05070c; }
   #stage3d canvas { display: block; width: 100% !important; height: 100% !important; }
@@ -44,12 +51,19 @@
 </header>
 <main class="scene">
   <p class="tagline">166,700 NEURONS. ONE TERRIBLE IDEA.<small id="disclosure"></small></p>
-  <div class="stage">
-    <div id="stage3d">
-      <div class="hud" id="bubble"></div>
-      <div class="hud" id="banner"></div>
+  <div class="live-grid">
+    <div class="stage">
+      <div id="stage3d">
+        <div class="hud" id="bubble"></div>
+        <div class="hud" id="banner"></div>
+      </div>
+      <div class="tape" id="tape">loading the chain…</div>
     </div>
-    <div class="tape" id="tape">loading the chain…</div>
+    <div class="stage cns">
+      <div class="cns-head"><span>CNS / RECORDED MODEL ACTIVITY</span><span id="cns-rates">DNp20 L — · R — · gate —</span></div>
+      <div class="cns-view"><canvas id="cns-dorsal"></canvas><div class="cap">Brain (frontal)</div></div>
+      <div class="cns-view"><canvas id="cns-frontal"></canvas><div class="cap">CNS (dorsal) · brain top, nerve cord below</div></div>
+    </div>
   </div>
   <div class="hudrow">
       <div class="panel" id="hud-rates">
@@ -62,14 +76,14 @@
       <div class="panel" id="hud-brain">
         <div class="meta" id="brain-title">BRAIN · loading atlas…</div>
         <div class="legend">
-          <div class="dot" style="background:#233a5e"></div><div>neuron, silent this trial</div>
-          <div class="dot" style="background:#bef264;box-shadow:0 0 6px #bef264"></div><div>neuron firing (brightness = spike count)</div>
+          <div class="dot" style="background:#3d4754"></div><div>positioned soma, silent this trial (brightness = local density)</div>
+          <div class="dot" style="background:#c8ec46;box-shadow:0 0 6px #c8ec46"></div><div>neuron that fired in this trial (brightness = spike count)</div>
           <div class="dot" style="background:#38bdf8"></div><div>DNp20 left / right readout cells</div>
           <div class="dot" style="background:#fbbf24"></div><div>DNpe017 gate cells</div>
         </div>
         <div class="meta" id="brain-note" style="margin-top:6px"></div>
         <div class="meta" id="brain-stats"></div>
-        <div class="meta"><label><input type="checkbox" id="brain-rotate"> auto-rotate</label> · drag the brain to rotate</div>
+
       </div>
   </div>
   <div class="controls">

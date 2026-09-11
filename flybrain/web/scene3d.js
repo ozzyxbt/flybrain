@@ -1,7 +1,8 @@
 /* three.js replay of a hash-chained run.
    Desk, monitor (the exact trial frame as a texture), LEFT/RIGHT buttons, a
-   smooth fly, and a brain hologram: one point per readout-array cell placed
-   from the run's atlas, coloured by that trial's recorded spike counts. */
+   smooth fly; and beside it fixed frontal/dorsal CNS projections where every
+   positioned soma is a dim point and the cells that fired in the current
+   trial light up from the recorded spike counts. */
 (function () {
   const stage = document.getElementById("stage3d");
   if (!stage) return;
@@ -136,107 +137,110 @@
     }
   }
 
-  // -------------------------------------------------------------- brain
-  const brain = new T.Group(); brain.position.set(-1.85, 2.55, -0.7); brain.scale.setScalar(0.95); scene.add(brain);
-  brain.add(label("READOUT CELLS · this trial", 1.6, 0.2, "#7d8bab", 0, 0.7, 0));
-  const B = { n: 0, cells: null, target: null, cur: null, colors: null, points: null, hi: null, hiIdx: [], schematic: true, positionsOk: null };
-  const SHAPES = [[[0, 0.05, 0], [0.55, 0.4, 0.32]], [[-0.85, 0, 0], [0.28, 0.3, 0.25]], [[0.85, 0, 0], [0.28, 0.3, 0.25]], [[0, -0.42, 0.05], [0.3, 0.2, 0.2]]];
-  function schematicHull() {
-    const hullMat = new T.MeshPhysicalMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.07, roughness: 0.2, side: T.DoubleSide, depthWrite: false });
-    const edgeMat = new T.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.12 });
-    for (const [c, r] of SHAPES) {
-      const geo = new T.SphereGeometry(1, 20, 14);
-      const m = new T.Mesh(geo, hullMat); m.position.set(...c); m.scale.set(...r); brain.add(m);
-      const e = new T.LineSegments(new T.WireframeGeometry(new T.SphereGeometry(1, 10, 7)), edgeMat); e.position.set(...c); e.scale.set(...r); brain.add(e);
+  // ---------------------------------------------------------------- CNS
+  // Fixed anatomical projections drawn straight into pixel buffers: a dim
+  // density silhouette of every positioned soma, the neurons that fired in
+  // the current trial in bright colour, and the readout cells as markers.
+  const CNS = { n: 0, cells: null, cur: null, target: null, views: [], ok: null, schematic: true, big: false };
+  const VIEW_W = 920, VIEW_H = 460; // device pixels; CSS scales to the panel
+  function orient(raw, n, okMask, schematic) {
+    // Pick axes by extent: the longest span is the brain–nerve-cord axis, shown
+    // vertical with the denser (brain) end up; the second is left–right.
+    const pos = new Float32Array(n * 3);
+    if (schematic) { pos.set(raw.subarray(0, n * 3)); return pos; }
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (let i = 0; i < n; i++) if (okMask[i]) for (let k = 0; k < 3; k++) { const v = raw[i * 3 + k]; if (v < lo[k]) lo[k] = v; if (v > hi[k]) hi[k] = v; }
+    const ext = [0, 1, 2].map((k) => hi[k] - lo[k]);
+    const order = [0, 1, 2].sort((a, b) => ext[b] - ext[a]); // [long, mid, short]
+    const [L, Mx, Sh] = order;
+    const vals = []; for (let i = 0; i < n; i++) if (okMask[i]) vals.push(raw[i * 3 + L]);
+    vals.sort((a, b) => a - b); const median = vals[vals.length >> 1], mid = (lo[L] + hi[L]) / 2;
+    const flipV = median < mid ? -1 : 1; // denser half (brain) goes up
+    for (let i = 0; i < n; i++) { pos[i * 3] = raw[i * 3 + Mx]; pos[i * 3 + 1] = flipV * raw[i * 3 + L]; pos[i * 3 + 2] = raw[i * 3 + Sh]; }
+    return pos;
+  }
+  function makeView(id, pos, okMask, n, hAxis, vAxis, schematic) {
+    const canvas = document.getElementById("cns-" + id);
+    canvas.width = VIEW_W; canvas.height = VIEW_H;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const img = ctx.createImageData(VIEW_W, VIEW_H);
+    let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+    for (let i = 0; i < n; i++) if (okMask[i]) { const a = pos[i * 3 + hAxis], b = pos[i * 3 + vAxis]; if (a < lo[0]) lo[0] = a; if (a > hi[0]) hi[0] = a; if (b < lo[1]) lo[1] = b; if (b > hi[1]) hi[1] = b; }
+    const pad = 28, sw = VIEW_W - 2 * pad, sh = VIEW_H - 2 * pad;
+    const scale = Math.min(sw / (hi[0] - lo[0] || 1), sh / (hi[1] - lo[1] || 1));
+    const ox = pad + (sw - (hi[0] - lo[0]) * scale) / 2, oy = pad + (sh - (hi[1] - lo[1]) * scale) / 2;
+    const pix = new Int32Array(n).fill(-1);
+    const density = new Float32Array(VIEW_W * VIEW_H);
+    for (let i = 0; i < n; i++) {
+      if (!okMask[i]) continue;
+      const x = Math.round(ox + (pos[i * 3 + hAxis] - lo[0]) * scale), y = Math.round(oy + (hi[1] - pos[i * 3 + vAxis]) * scale);
+      if (x < 1 || y < 1 || x >= VIEW_W - 1 || y >= VIEW_H - 1) continue;
+      pix[i] = y * VIEW_W + x;
+      density[pix[i]] += 1; density[pix[i] + 1] += 0.5; density[pix[i] + VIEW_W] += 0.5;
     }
-    // decorative dim cloud so the outline reads as a brain (not data)
-    const N = 3500, pos = new Float32Array(N * 3);
-    let k = 0, seed = 12345;
-    const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
-    while (k < N) {
-      const [c, r] = SHAPES[Math.floor(rnd() * SHAPES.length)];
-      const x = (rnd() * 2 - 1), y = (rnd() * 2 - 1), z = (rnd() * 2 - 1);
-      if (x * x + y * y + z * z > 1) continue;
-      pos[k * 3] = c[0] + x * r[0]; pos[k * 3 + 1] = c[1] + y * r[1]; pos[k * 3 + 2] = c[2] + z * r[2]; k++;
+    const base = new Uint8ClampedArray(VIEW_W * VIEW_H * 4);
+    const gain = schematic ? 60 : 26;
+    for (let k = 0; k < VIEW_W * VIEW_H; k++) {
+      const d = density[k]; const g = d ? Math.min(150, 34 + d * gain) : 0;
+      base[k * 4] = g * 0.72; base[k * 4 + 1] = g * 0.8; base[k * 4 + 2] = g * 0.86; base[k * 4 + 3] = 255;
     }
-    const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3));
-    brain.add(new T.Points(g, new T.PointsMaterial({ color: 0x1b2a48, size: 0.012, transparent: true, opacity: 0.55, depthWrite: false })));
+    return { id, canvas, ctx, img, pix, base };
   }
   async function loadAtlas(run) {
-    if (!run || !run.atlas) { $("#brain-title").textContent = "BRAIN · no atlas in this run"; schematicHull(); return; }
+    if (!run || !run.atlas) { $("#brain-title").textContent = "CNS · no atlas in this run"; return; }
     const atlas = await (await fetch("/run/" + run.atlas.path)).json();
-    const buf = await (await fetch("/run/" + atlas.positions_path)).arrayBuffer();
-    const raw = new Float32Array(buf);
-    B.n = atlas.n; B.cells = atlas.cells; B.schematic = atlas.schematic;
-    B.positionsOk = new Uint8Array(B.n);
-    const pos = new Float32Array(B.n * 3);
-    let ok = 0;
-    for (let i = 0; i < B.n; i++) {
-      const x = raw[i * 3], y = raw[i * 3 + 1], z = raw[i * 3 + 2];
-      if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) { B.positionsOk[i] = 1; ok++; pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; }
-      else { pos[i * 3] = 0; pos[i * 3 + 1] = -99; pos[i * 3 + 2] = 0; }
-    }
-    if (B.schematic) schematicHull();
-    B.target = new Float32Array(B.n); B.cur = new Float32Array(B.n);
-    B.colors = new Float32Array(B.n * 3);
-    const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3)); g.setAttribute("color", new T.BufferAttribute(B.colors, 3));
-    const big = B.n < 1000;
-    B.big = big;
-    if (!big) { brain.scale.setScalar(1.05); brain.position.set(-1.9, 2.25, -0.75); }
-    B.points = new T.Points(g, new T.PointsMaterial({ size: big ? 0.05 : 0.0075, vertexColors: true, transparent: true, opacity: big ? 0.95 : 0.7, blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
-    brain.add(B.points);
-    // readout cells: larger markers + labels at each group's centroid
-    B.hiIdx = [...B.cells.left, ...B.cells.right, ...B.cells.gate];
-    const hpos = new Float32Array(B.hiIdx.length * 3), hcol = new Float32Array(B.hiIdx.length * 3);
-    B.hiIdx.forEach((idx, k) => { hpos.set([pos[idx * 3], pos[idx * 3 + 1], pos[idx * 3 + 2]], k * 3); });
-    B.hiColors = hcol;
-    const hg = new T.BufferGeometry(); hg.setAttribute("position", new T.BufferAttribute(hpos, 3)); hg.setAttribute("color", new T.BufferAttribute(hcol, 3));
-    B.hi = new T.Points(hg, new T.PointsMaterial({ size: big ? 0.11 : 0.075, vertexColors: true, transparent: true, opacity: 0.95, blending: T.AdditiveBlending, depthWrite: false }));
-    brain.add(B.hi);
-    for (const [name, idxs, color, ox, oy] of [["DNp20 L", B.cells.left, "#38bdf8", -0.28, 0.14], ["DNp20 R", B.cells.right, "#38bdf8", 0.28, 0.14], ["DNpe017 gate", B.cells.gate, "#fbbf24", 0, 0.3]]) {
-      const c = [0, 0, 0]; let m = 0;
-      for (const i of idxs) if (B.positionsOk[i]) { c[0] += pos[i * 3]; c[1] += pos[i * 3 + 1]; c[2] += pos[i * 3 + 2]; m++; }
-      if (m) { const s = big ? 1 : 0.7; brain.add(label(name, 0.9 * s, 0.11 * s, color, c[0] / m + ox * s, c[1] / m + oy * s, c[2] / m)); }
-    }
-    setActivity(null);
-    $("#brain-title").textContent = "BRAIN · " + (B.schematic ? "SCHEMATIC LAYOUT (fixture)" : "MaleCNS v1.0 soma positions");
+    const raw = new Float32Array(await (await fetch("/run/" + atlas.positions_path)).arrayBuffer());
+    const n = atlas.n; CNS.n = n; CNS.cells = atlas.cells; CNS.schematic = atlas.schematic; CNS.big = n >= 1000;
+    const okMask = new Uint8Array(n); let ok = 0;
+    for (let i = 0; i < n; i++) if (Number.isFinite(raw[i * 3]) && Number.isFinite(raw[i * 3 + 1]) && Number.isFinite(raw[i * 3 + 2])) { okMask[i] = 1; ok++; }
+    CNS.ok = okMask;
+    const pos = orient(raw, n, okMask, atlas.schematic);
+    CNS.views = [makeView("frontal", pos, okMask, n, 0, 1, atlas.schematic), makeView("dorsal", pos, okMask, n, 0, 2, atlas.schematic)];
+    CNS.target = new Float32Array(n); CNS.cur = new Float32Array(n);
+    CNS.hi = [];
+    for (const [kind, idxs] of [["left", atlas.cells.left], ["right", atlas.cells.right], ["gate", atlas.cells.gate]]) for (const i of idxs) CNS.hi.push({ i, kind });
+    $("#brain-title").textContent = "CNS · " + (atlas.schematic ? "SCHEMATIC LAYOUT (fixture)" : "MaleCNS v1.0 soma positions") + " · " + (atlas.schematic ? n : ok.toLocaleString()) + " annotated somata";
     $("#brain-note").textContent = atlas.note;
-    $("#brain-stats").textContent = `${B.n.toLocaleString()} cells in the readout array · ${ok.toLocaleString()} with positions · readout cells ${B.hiIdx.length}`;
+    setActivity(null);
   }
   function setActivity(counts) {
-    if (!B.target) return;
+    if (!CNS.target) return;
     let max = 1, firing = 0;
-    if (counts) for (let i = 0; i < B.n; i++) { if (counts[i] > max) max = counts[i]; if (counts[i] > 0) firing++; }
+    if (counts) for (let i = 0; i < CNS.n; i++) { if (counts[i] > max) max = counts[i]; if (counts[i] > 0) firing++; }
     const lmax = Math.log1p(max);
-    for (let i = 0; i < B.n; i++) B.target[i] = counts ? Math.log1p(counts[i]) / lmax : 0;
-    if (counts) $("#brain-stats").textContent = `${firing.toLocaleString()} of ${B.n.toLocaleString()} cells fired · max ${max} spikes in ${S.readout ? S.readout.neural_window_ms : 500} ms`;
+    for (let i = 0; i < CNS.n; i++) CNS.target[i] = counts ? Math.log1p(counts[i]) / lmax : 0;
+    $("#brain-stats").textContent = counts ? `${firing.toLocaleString()} of ${CNS.n.toLocaleString()} cells fired · max ${max} spikes / ${S.readout ? S.readout.neural_window_ms : 500} ms` : "no trial loaded";
   }
-  const DIM_BIG = [0.14, 0.23, 0.38], DIM_SMALL = [0.03, 0.06, 0.12], HOT = [0.75, 0.95, 0.39], CELL = { left: [0.22, 0.74, 0.97], right: [0.22, 0.74, 0.97], gate: [0.98, 0.75, 0.14] };
-  function animateBrain(t, dt) {
-    if (B.autoRotate && !B.dragging) brain.rotation.y += 0.0025 * dt / 16;
-    if (!B.points) return;
-    const c = B.colors, hc = B.hiColors, DIM = B.big ? DIM_BIG : DIM_SMALL;
-    for (let i = 0; i < B.n; i++) {
-      B.cur[i] += (B.target[i] - B.cur[i]) * Math.min(1, dt / 220);
-      const v = B.cur[i] * (0.82 + 0.18 * Math.sin(t / 45 + i * 1.7));
-      c[i * 3] = DIM[0] + (HOT[0] - DIM[0]) * v; c[i * 3 + 1] = DIM[1] + (HOT[1] - DIM[1]) * v; c[i * 3 + 2] = DIM[2] + (HOT[2] - DIM[2]) * v;
+  const COLORS = { fire: [200, 236, 70], left: [56, 189, 248], right: [56, 189, 248], gate: [251, 191, 36] };
+  function stamp(px, idx, rgb, a, r) {
+    // additive blob of radius r pixels around idx
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const k = (idx + dy * VIEW_W + dx) * 4; if (k < 0 || k >= px.length) continue;
+      const f = a * (1 - (Math.abs(dx) + Math.abs(dy)) / (2 * r + 1));
+      px[k] = Math.min(255, px[k] + rgb[0] * f); px[k + 1] = Math.min(255, px[k + 1] + rgb[1] * f); px[k + 2] = Math.min(255, px[k + 2] + rgb[2] * f);
     }
-    B.hiIdx.forEach((idx, k) => {
-      const kind = k < B.cells.left.length ? "left" : k < B.cells.left.length + B.cells.right.length ? "right" : "gate";
-      const base = CELL[kind], v = B.cur[idx];
-      hc[k * 3] = base[0] * (0.35 + 0.65 * v) + v * 0.4; hc[k * 3 + 1] = base[1] * (0.35 + 0.65 * v) + v * 0.3; hc[k * 3 + 2] = base[2] * (0.35 + 0.65 * v);
-    });
-    B.points.geometry.attributes.color.needsUpdate = true;
-    B.hi.geometry.attributes.color.needsUpdate = true;
   }
-  // drag to rotate the brain; auto-rotate is opt-in
-  B.autoRotate = false;
-  const rotBox = $("#brain-rotate"); if (rotBox) rotBox.onchange = (e) => (B.autoRotate = e.target.checked);
-  let drag = null;
-  renderer.domElement.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY }; B.dragging = true; });
-  window.addEventListener("pointerup", () => { drag = null; B.dragging = false; });
-  window.addEventListener("pointermove", (e) => { if (!drag) return; brain.rotation.y += (e.clientX - drag.x) * 0.01; brain.rotation.x = Math.max(-1, Math.min(1, brain.rotation.x + (e.clientY - drag.y) * 0.006)); drag = { x: e.clientX, y: e.clientY }; });
-
+  function animateCNS(t, dt) {
+    if (!CNS.views.length) return;
+    const n = CNS.n, cur = CNS.cur, tg = CNS.target;
+    const k = Math.min(1, dt / 200);
+    for (let i = 0; i < n; i++) cur[i] += (tg[i] - cur[i]) * k;
+    const r = CNS.big ? 1 : 3;
+    for (const v of CNS.views) {
+      const px = v.img.data; px.set(v.base);
+      for (let i = 0; i < n; i++) {
+        const c = cur[i]; if (c < 0.03) continue;
+        const idx = v.pix[i]; if (idx < 0) continue;
+        const a = (CNS.big ? 0.55 * c * c + 0.15 * c : c) * (0.85 + 0.15 * Math.sin(t / 60 + i));
+        stamp(px, idx, COLORS.fire, a, r);
+      }
+      for (const h of CNS.hi) {
+        const idx = v.pix[h.i]; if (idx < 0) continue;
+        stamp(px, idx, COLORS[h.kind], 0.55 + 0.45 * cur[h.i], CNS.big ? 3 : 5);
+      }
+      v.ctx.putImageData(v.img, 0, 0);
+    }
+  }
   // -------------------------------------------------------------- state
   const S = { events: [], i: 0, playing: false, speed: 1, fly: { x: 0, target: 0, yaw: Math.PI / 2, targetYaw: Math.PI / 2, mode: "idle" }, readout: null, pressed: null, pressUntil: 0, coin: null, launch: null, manifest: null, run: null, confetti: [], tape: "" };
   const now = () => performance.now();
@@ -271,6 +275,7 @@
     $("#hz-l").textContent = a ? L.toFixed(2) + " Hz" : "—"; $("#hz-r").textContent = a ? R.toFixed(2) + " Hz" : "—";
     const g = a ? a.gate_spikes : 0; $("#gate-led").className = "gate" + (g ? " on" : ""); $("#gate-txt").textContent = a ? `gate ${g} spike${g === 1 ? "" : "s"} · raw ${a.result}` : "gate —";
     $("#hud-ckpt").textContent = a ? `ckpt ${a.checkpoint_sha256.slice(0, 10)}… · ${a.neural_window_ms} ms · ${a.backend}` : "";
+    const cr = $("#cns-rates"); if (cr) cr.textContent = a ? `DNp20 L ${L.toFixed(1)} Hz · R ${R.toFixed(1)} Hz · gate ${g}` : "DNp20 L — · R — · gate —";
   }
 
   // ------------------------------------------------------------- events
@@ -374,7 +379,7 @@
     fly.position.set(f.x, 1.24 + lift, 0.45); fly.rotation.y = f.yaw;
     animateFly(t, moving, f.mode);
     for (const side of ["LEFT", "RIGHT"]) { const b = buttons[side], down = S.pressed === side && now() < S.pressUntil; b.cap.position.y += ((down ? 0.06 : 0.12) - b.cap.position.y) * 0.4; b.cap.material.emissiveIntensity = down ? 1.2 : 0.15; }
-    animateBrain(t, dt);
+    animateCNS(t, dt);
     for (let i = S.confetti.length - 1; i >= 0; i--) { const m = S.confetti[i]; m.position.y -= m.userData.v * dt; m.rotation.x += m.userData.r; m.rotation.y += m.userData.r * 0.7; if (m.position.y < 0.9) { scene.remove(m); S.confetti.splice(i, 1); } }
     // bubble follows the fly's head
     headPos.set(f.x, 1.24 + lift + 0.42, 0.45).project(camera);
