@@ -1,4 +1,4 @@
-/* Pixel-art replay of a hash-chained run: the fly at its desk, the monitor
+/* Replay of a hash-chained run: a voxel (3D) fly at its desk, the monitor
    showing the exact trial frame, the wall panel lighting up from the stored
    spike counts, LEFT/RIGHT buttons pressed per the recorded readout. */
 (function () {
@@ -9,49 +9,108 @@
   const W = canvas.width, H = canvas.height;
   const $ = (s) => document.querySelector(s);
 
-  // ------------------------------------------------------------ sprites
-  const PAL = { k: "#0b0e14", g: "#4b5566", G: "#7a8699", h: "#9aa6b8", r: "#e11d48", R: "#ff7a95", w: "#b9d0f0", y: "#2a3040", a: "#bef264" };
-  const FLY_A = [
-    ".....wwwwwww....",
-    "...wwwwwwwwwww..",
-    "..www.......www.",
-    "...GGGG.........",
-    ".rRGGGGGgggg....",
-    "rrrGGGGGgggggg..",
-    ".rrGGGGGggkggkg.",
-    "..GGGGGgggggggg.",
-    "...ggggggggggg..",
-    "....y..y..y.....",
-    "...y...y...y....",
-    "..y....y....y...",
-  ];
-  const FLY_B = [
-    "................",
-    "................",
-    "...wwwwwwwwww...",
-    "..wGGGGwwwwwwww.",
-    ".rRGGGGGgggg.ww.",
-    "rrrGGGGGgggggg..",
-    ".rrGGGGGggkggkg.",
-    "..GGGGGgggggggg.",
-    "...ggggggggggg..",
-    "....y..y..y.....",
-    "....y..y..y.....",
-    "...y...y...y....",
-  ];
-  function drawSprite(rows, x, y, s, flip) {
-    ctx.save();
-    ctx.translate(x, y);
-    if (flip) { ctx.scale(-1, 1); ctx.translate(-rows[0].length * s, 0); }
-    for (let r = 0; r < rows.length; r++) for (let c = 0; c < rows[r].length; c++) {
-      const ch = rows[r][c];
-      if (ch === ".") continue;
-      ctx.fillStyle = PAL[ch] || ch;
-      if (ch === "w") ctx.globalAlpha = 0.65;
-      ctx.fillRect(c * s, r * s, s, s);
-      ctx.globalAlpha = 1;
+  // ------------------------------------------------------ voxel fly (3D)
+  // A software voxel renderer: the fly is a set of unit cubes plus two wing
+  // quads in model space (x forward, y up, z to the fly's left). Each frame it
+  // is rotated (yaw, then a fixed camera pitch), orthographically projected,
+  // depth-sorted and shaded. No WebGL, no libraries, still pixel-crisp.
+  const COL = { body: [128, 140, 160], bodyL: [160, 172, 190], abd: [104, 114, 134], stripe: [58, 64, 80], eye: [235, 40, 84], eyeL: [255, 122, 149], leg: [60, 68, 88], wing: [200, 220, 248] };
+  function ellipsoid(cx, cy, cz, rx, ry, rz, color, stripe) {
+    const out = [];
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++)
+      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++)
+        for (let z = Math.floor(cz - rz); z <= Math.ceil(cz + rz); z++) {
+          const nx = (x - cx) / rx, ny = (y - cy) / ry, nz = (z - cz) / rz;
+          const d = nx * nx + ny * ny + nz * nz;
+          if (d > 1) continue;
+          // keep the shell only (interior voxels are never visible)
+          const inner = ((x - cx) / (rx - 1)) ** 2 + ((y - cy) / (ry - 1)) ** 2 + ((z - cz) / (rz - 1)) ** 2;
+          if (rx > 1.5 && ry > 1.5 && rz > 1.5 && inner <= 1) continue;
+          const c = stripe && ((x - Math.floor(cx)) % 3 === 0) ? COL.stripe : color;
+          const len = Math.hypot(nx, ny, nz) || 1;
+          out.push({ x, y, z, c, n: [nx / len, ny / len, nz / len] });
+        }
+    return out;
+  }
+  function segment(a, b, color) {
+    const out = [];
+    const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2])));
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      out.push({ x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t, z: a[2] + (b[2] - a[2]) * t, c: color, n: [0, 1, 0] });
     }
-    ctx.restore();
+    return out;
+  }
+  const FLY_BODY = [
+    ...ellipsoid(5.5, 0, 0, 2.3, 2.1, 2.3, COL.body),           // head
+    ...ellipsoid(6.2, 0.4, 2.0, 1.4, 1.3, 1.1, COL.eye),          // left eye
+    ...ellipsoid(6.2, 0.4, -2.0, 1.4, 1.3, 1.1, COL.eye),         // right eye
+    ...ellipsoid(1.5, 0.3, 0, 3.2, 2.7, 2.7, COL.bodyL),          // thorax
+    ...ellipsoid(-4.5, -0.2, 0, 5.0, 2.4, 2.4, COL.abd, true),    // abdomen (striped)
+    ...segment([7.5, 1.2, 0.6], [9.5, 2.4, 1.2], COL.leg),         // antennae
+    ...segment([7.5, 1.2, -0.6], [9.5, 2.4, -1.2], COL.leg),
+  ];
+  const LEG_ROOTS = [[3, -1.5, 2], [1.5, -1.8, 2.6], [-0.5, -1.5, 2.4], [3, -1.5, -2], [1.5, -1.8, -2.6], [-0.5, -1.5, -2.4]];
+  function legs(phase) {
+    const out = [];
+    LEG_ROOTS.forEach((r, i) => {
+      const side = r[2] > 0 ? 1 : -1;
+      const swing = Math.sin(phase + i * 2.1) * 1.2;
+      const knee = [r[0] + swing, r[1] - 1.5, r[2] + side * 2.2];
+      const foot = [r[0] + swing * 1.4, -4.6, r[2] + side * 3.0];
+      out.push(...segment(r, knee, COL.leg), ...segment(knee, foot, COL.leg));
+    });
+    return out;
+  }
+  function wingQuads(flap) {
+    // corners in model space, rotated about the x axis at the wing root by ±flap
+    const quads = [];
+    for (const side of [1, -1]) {
+      const root = [2.2, 2.4, side * 1.2];
+      const pts = [[0, 0, 0], [-1.5, 0.3, side * 5.5], [-8.5, 0.2, side * 5.0], [-7.5, 0, side * 1.5]];
+      const a = flap * side;
+      quads.push(pts.map(([x, y, z]) => [root[0] + x, root[1] + y * Math.cos(a) - z * Math.sin(a), root[2] + y * Math.sin(a) + z * Math.cos(a)]));
+    }
+    return quads;
+  }
+  const PITCH = -0.42; // camera looks down at the desk
+  function project(p, yaw) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw);
+    const x1 = p[0] * cy + p[2] * sy, z1 = -p[0] * sy + p[2] * cy, y1 = p[1];
+    const cp = Math.cos(PITCH), sp = Math.sin(PITCH);
+    const y2 = y1 * cp - z1 * sp, z2 = y1 * sp + z1 * cp;
+    return [x1, y2, z2];
+  }
+  function shade(c, n, yaw) {
+    const [nx, ny, nz] = project(n, yaw);
+    const light = Math.max(0, nx * -0.45 + ny * 0.8 + nz * 0.4);
+    const k = 0.62 + 0.55 * light;
+    return `rgb(${Math.min(255, c[0] * k) | 0},${Math.min(255, c[1] * k) | 0},${Math.min(255, c[2] * k) | 0})`;
+  }
+  function drawFly3D(cx, groundY, yaw, s, flap, legPhase, lift) {
+    const items = [];
+    const body = FLY_BODY.concat(legs(legPhase));
+    for (const v of body) {
+      const [x, y, z] = project([v.x, v.y, v.z], yaw);
+      items.push({ d: z, kind: "v", x, y, c: shade(v.c, v.n, yaw) });
+    }
+    for (const q of wingQuads(flap)) {
+      const pr = q.map((p) => project(p, yaw));
+      items.push({ d: Math.max(...pr.map((p) => p[2])), kind: "w", pts: pr });
+    }
+    items.sort((a, b) => a.d - b.d);
+    // shadow on the desk
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath(); ctx.ellipse(cx, groundY + 2, 7 * s, 2.2 * s, 0, 0, Math.PI * 2); ctx.fill();
+    const oy = groundY - 5 * s - lift;
+    for (const it of items) {
+      if (it.kind === "v") { ctx.fillStyle = it.c; ctx.fillRect(Math.round(cx + it.x * s - s / 2), Math.round(oy - it.y * s - s / 2), Math.ceil(s), Math.ceil(s)); }
+      else {
+        ctx.globalAlpha = 0.55; ctx.fillStyle = `rgb(${COL.wing.join(",")})`;
+        ctx.beginPath(); it.pts.forEach((p, i) => (i ? ctx.lineTo(cx + p[0] * s, oy - p[1] * s) : ctx.moveTo(cx + p[0] * s, oy - p[1] * s))); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 0.9; ctx.strokeStyle = "rgba(220,235,255,0.6)"; ctx.lineWidth = 1; ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
   }
   function px(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
   function text(t, x, y, color, size, align) {
@@ -63,7 +122,7 @@
   // ------------------------------------------------------------ state
   const S = {
     events: [], i: 0, playing: false, speed: 1,
-    fly: { x: 300, y: 262, target: 300, facing: 1, mode: "idle", t: 0, hop: 0 },
+    fly: { x: 300, y: 262, target: 300, yaw: Math.PI / 2, targetYaw: Math.PI / 2, mode: "idle", t: 0, hop: 0 },
     bubble: null, bubbleUntil: 0,
     frameImg: null, spikes: null, readout: null,
     pressed: null, pressUntil: 0,
@@ -257,19 +316,30 @@
   function drawFly(t) {
     const f = S.fly;
     const dx = f.target - f.x;
-    if (Math.abs(dx) > 2) { f.x += Math.sign(dx) * Math.min(Math.abs(dx), 4 * S.speed); f.facing = Math.sign(dx); }
-    let bob = 0;
-    if (f.mode === "walk") bob = Math.sin(t / 60) * 2;
-    if (f.mode === "party") bob = -Math.abs(Math.sin(t / 120)) * 18;
-    if (f.mode === "press") bob = 4;
+    const moving = Math.abs(dx) > 2;
+    if (moving) f.x += Math.sign(dx) * Math.min(Math.abs(dx), 4 * S.speed);
+    // Facing: +x model axis points where the head goes. yaw 0 = screen right,
+    // PI = screen left, PI/2 = into the screen (toward the monitor).
+    if (moving) f.targetYaw = dx > 0 ? 0 : Math.PI;
+    else if (f.mode === "party") f.targetYaw = f.yaw + 0.12 * S.speed;
+    else f.targetYaw = Math.PI / 2;
+    let dyaw = ((f.targetYaw - f.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    f.yaw += Math.abs(dyaw) < 0.02 ? dyaw : Math.sign(dyaw) * Math.min(Math.abs(dyaw), 0.18 * S.speed);
+    let lift = 0, bob = 0;
+    if (moving) bob = Math.abs(Math.sin(t / 70)) * 2;
+    if (f.mode === "party") lift = Math.abs(Math.sin(t / 120)) * 22;
+    if (f.mode === "press") bob = -3;
     if (f.mode === "shrug") bob = Math.sin(t / 300) * 1;
-    const wings = Math.floor(t / 90) % 2 === 0 || f.mode === "idle" && Math.floor(t / 400) % 3 === 0;
-    drawSprite(wings ? FLY_A : FLY_B, f.x - 40, f.y - 60 + bob, 5, f.facing < 0);
-    if (f.mode === "party") { text("♪", f.x + 48, f.y - 80 + bob, "#bef264", 14); text("♪", f.x - 58, f.y - 70 - bob, "#38bdf8", 12); }
+    const flapping = moving || f.mode === "party" || f.mode === "press";
+    const flap = flapping ? Math.sin(t / 28) * 0.7 : 0.15 + Math.sin(t / 900) * 0.05 + (Math.floor(t / 1400) % 4 === 0 ? Math.sin(t / 30) * 0.4 : 0);
+    const legPhase = moving ? t / 60 : 0;
+    drawFly3D(f.x, f.y, f.yaw, 4.2, flap, legPhase, lift + bob);
+    if (f.mode === "party") { text("♪", f.x + 48, f.y - 80 - lift, "#bef264", 14); text("♪", f.x - 58, f.y - 70 + lift * 0.3, "#38bdf8", 12); }
     if (S.bubble && now() < S.bubbleUntil) {
       const w = Math.max(60, S.bubble.length * 7 + 16);
-      px(f.x - w / 2, f.y - 96 + bob, w, 22, "#f8fafc"); px(f.x - 4, f.y - 74 + bob, 8, 6, "#f8fafc");
-      text(S.bubble, f.x, f.y - 91 + bob, "#0b0e14", 10, "center");
+      const by = f.y - 96 - lift;
+      px(f.x - w / 2, by, w, 22, "#f8fafc"); px(f.x - 4, by + 22, 8, 6, "#f8fafc");
+      text(S.bubble, f.x, by + 5, "#0b0e14", 10, "center");
     }
   }
   function drawOverlay(t) {
