@@ -3,7 +3,7 @@
   "manifest_sha256": "c91ee4d2800088bba75527d9d2b24118d113a7a1353df5997b34774a75652c6b",
   "checkpoint_sha256": "fff4c787052fad94d3dd4cd935412b51f90c46c222b69b31622d7b5692cefc4b",
   "backend": "fixture-brain-v1",
-  "final_decision_sha256": "023fd3d9ed274023cf17131e539bcbdc06d26564d294754ab2f7ff97616629e9",
+  "final_decision_sha256": "38059c41a0eee43a7592d8d57d87c022e7594687159a658c7d0c49187fd74985",
   "identity": {
     "name": null,
     "ticker": "tick-neuron",
@@ -18,6 +18,6 @@
     "status": "NOT_ATTEMPTED",
     "reason": "identity incomplete: name"
   },
-  "chain_head": "023fd3d9ed274023cf17131e539bcbdc06d26564d294754ab2f7ff97616629e9",
+  "chain_head": "38059c41a0eee43a7592d8d57d87c022e7594687159a658c7d0c49187fd74985",
   "chain_length": 62
 }

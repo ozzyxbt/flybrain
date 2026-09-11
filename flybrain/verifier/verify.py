@@ -103,6 +103,18 @@ def _verify(root: Path, r: Report, resimulate: bool):
         r.warn("decoder.connectome_cells_not_reconstructed", "connectome cell indices need the prepared dataset; rates verified from recorded cell index lists if present")
         cells = _connectome_cells(run)
 
+    # 3b. Brain atlas (display asset, but bound to the run header)
+    atlas_info = run.get("atlas")
+    if atlas_info:
+        apath = root / atlas_info["path"]
+        if r.expect(apath.exists() and apath.is_relative_to(root) and file_sha256(apath) == atlas_info["sha256"], "atlas.hash_matches_run_header"):
+            atlas = json.loads(apath.read_text())
+            ppath = root / atlas["positions_path"]
+            r.expect(ppath.exists() and sha256_hex(ppath.read_bytes()) == atlas["positions_sha256"] and ppath.stat().st_size == atlas["n"] * 12, "atlas.positions_hash_and_size")
+            r.expect(atlas["schematic"] == (run["backend"] == FIXTURE_MODEL) == atlas_info["schematic"], "atlas.schematic_flag_matches_backend")
+            if cells is not None:
+                r.expect(atlas["cells"] == {k: list(map(int, v)) for k, v in cells.items()}, "atlas.readout_cells_match_decoder")
+
     # 4. Trials
     trials = {}
     for entry, t, digest in by_kind.get("trial", []):

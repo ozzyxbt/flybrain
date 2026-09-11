@@ -50,6 +50,16 @@ class Transcript:
             raise RuntimeError("Backend checkpoint does not match the manifest's brain_checkpoint_sha256")
         self.chain = HashChain(self.root)
         self.committer = committer or LocalCommitter(self.root, run_id)
+        atlas_info = None
+        if hasattr(brain, "atlas"):
+            atlas = brain.atlas()
+            (self.root / "brain").mkdir(exist_ok=True)
+            positions = np.ascontiguousarray(atlas.pop("positions"), dtype="<f4")
+            (self.root / "brain" / "positions.f32").write_bytes(positions.tobytes())
+            atlas["positions_path"] = "brain/positions.f32"
+            atlas["positions_sha256"] = hashlib.sha256(positions.tobytes()).hexdigest()
+            write_canonical(self.root / "brain" / "atlas.json", atlas)
+            atlas_info = {"path": "brain/atlas.json", "sha256": file_sha256(self.root / "brain" / "atlas.json"), "schematic": atlas["schematic"]}
         self.chain.append(
             "run_header",
             "run.json",
@@ -62,6 +72,7 @@ class Transcript:
                 "checkpoint_file": brain.checkpoint_name,
                 "checkpoint_sha256": brain.checkpoint_sha256,
                 "decoder_cells": brain.cell_ids,
+                "atlas": atlas_info,
                 "software": software,
                 "learning_frozen": True,
                 "reinforcement_injected": False,

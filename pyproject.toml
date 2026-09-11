@@ -24,7 +24,7 @@ include = ["flybrain*"]
 
 [tool.setuptools.package-data]
 "flybrain.neural" = ["*.cpp", "*.json"]
-"flybrain" = ["web/*"]
+"flybrain" = ["web/*", "web/vendor/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

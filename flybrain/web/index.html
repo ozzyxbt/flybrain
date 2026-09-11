@@ -6,16 +6,31 @@
 <title>FLYBRAIN</title>
 <link rel="stylesheet" href="/static/style.css">
 <style>
-  main.scene { max-width: 1100px; gap: 12px; }
+  main.scene { max-width: 1180px; gap: 12px; }
   .stage { position: relative; background: #05070c; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  canvas#scene { display: block; width: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
-  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .controls .spacer { flex: 1; }
+  #stage3d { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #05070c; }
+  #stage3d canvas { display: block; width: 100% !important; height: 100% !important; }
+  .hud { position: absolute; pointer-events: none; font-size: 11px; }
+  .hudrow { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; font-size: 11px; }
+  #hud-brain .legend { display: grid; grid-template-columns: 12px 1fr; gap: 4px 8px; align-items: center; margin-top: 6px; }
+  #hud-brain .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .hudrow .bar { display: grid; grid-template-columns: 22px 1fr 80px; gap: 6px; align-items: center; margin-top: 4px; }
+  .hudrow .track { height: 9px; background: #0a0f1c; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+  .hudrow .fill { height: 100%; background: var(--cyan); width: 0; transition: width .3s; }
+  .hudrow .bar.right .fill { background: var(--ruby); }
+  @media (max-width: 700px) { .hudrow { grid-template-columns: 1fr; } }
+  #bubble { transform: translate(-50%, -100%); background: #f8fafc; color: #0b0e14; padding: 4px 10px; border-radius: 6px; font-weight: 700; white-space: nowrap; display: none; }
+  #bubble:after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-top-color: #f8fafc; border-bottom: 0; }
+  #banner { left: 0; right: 0; bottom: 0; padding: 7px 12px; text-align: center; font-size: 13px; font-weight: 700; background: rgba(5,7,12,0.85); border-top: 2px solid var(--acid); display: none; }
   .tape { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; border-top: 1px solid var(--line); padding: 6px 12px; background: #070a12; }
   .tape span { color: var(--cyan); }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .controls .spacer { flex: 1; }
   .replay { font-size: 11px; letter-spacing: 0.14em; color: var(--amber); border: 1px solid var(--amber); padding: 2px 8px; border-radius: 4px; }
   .tagline { font-size: 22px; font-weight: 800; letter-spacing: 0.06em; margin: 0; }
   .tagline small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+  .gate { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #3b1d1d; vertical-align: middle; margin-right: 6px; }
+  .gate.on { background: var(--acid); box-shadow: 0 0 8px var(--acid); }
 </style>
 </head>
 <body data-page="live">
@@ -30,8 +45,32 @@
 <main class="scene">
   <p class="tagline">166,700 NEURONS. ONE TERRIBLE IDEA.<small id="disclosure"></small></p>
   <div class="stage">
-    <canvas id="scene" width="640" height="320"></canvas>
+    <div id="stage3d">
+      <div class="hud" id="bubble"></div>
+      <div class="hud" id="banner"></div>
+    </div>
     <div class="tape" id="tape">loading the chain…</div>
+  </div>
+  <div class="hudrow">
+      <div class="panel" id="hud-rates">
+        <div class="meta">DNp20 L / R · DNpe017 GATE</div>
+        <div class="bar"><span>L</span><div class="track"><div class="fill" id="bar-l"></div></div><span id="hz-l">—</span></div>
+        <div class="bar right"><span>R</span><div class="track"><div class="fill" id="bar-r"></div></div><span id="hz-r">—</span></div>
+        <div style="margin-top:6px"><span class="gate" id="gate-led"></span><span id="gate-txt">gate —</span></div>
+        <div class="meta" id="hud-ckpt"></div>
+      </div>
+      <div class="panel" id="hud-brain">
+        <div class="meta" id="brain-title">BRAIN · loading atlas…</div>
+        <div class="legend">
+          <div class="dot" style="background:#233a5e"></div><div>neuron, silent this trial</div>
+          <div class="dot" style="background:#bef264;box-shadow:0 0 6px #bef264"></div><div>neuron firing (brightness = spike count)</div>
+          <div class="dot" style="background:#38bdf8"></div><div>DNp20 left / right readout cells</div>
+          <div class="dot" style="background:#fbbf24"></div><div>DNpe017 gate cells</div>
+        </div>
+        <div class="meta" id="brain-note" style="margin-top:6px"></div>
+        <div class="meta" id="brain-stats"></div>
+        <div class="meta">drag the brain to rotate</div>
+      </div>
   </div>
   <div class="controls">
     <span class="replay" id="mode">REPLAY OF HASH-CHAINED RUN</span>
@@ -42,10 +81,11 @@
     <span class="spacer"></span>
     <span class="meta" id="progress"></span>
   </div>
-  <div class="meta">Every frame the fly sees, every spike count and every left/right rate on this stage is read from the run's chained artifacts (<a href="/run/chain.jsonl">chain.jsonl</a>). The fixture backend is a deterministic stand-in, not the connectome. Price reactions and viewer-driven emotes are not part of this build.</div>
+  <div class="meta">Every frame the fly sees, every spike count and every left/right rate on this stage is read from the run's chained artifacts (<a href="/run/chain.jsonl">chain.jsonl</a>). Neuron activity on the brain is the recorded spike array of the current trial; on the fixture backend the neuron <em>positions</em> are a schematic layout, not anatomy (the atlas says so and is hashed into the run header). Price reactions and viewer-driven emotes are not part of this build.</div>
 </main>
 <footer>The fly chose among precommitted alternatives using a fixed, published neural decoding protocol. Not consciousness; profitable learning not demonstrated.</footer>
 <script src="/static/app.js"></script>
-<script src="/static/scene.js"></script>
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/scene3d.js"></script>
 </body>
 </html>

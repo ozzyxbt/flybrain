@@ -72,6 +72,33 @@ class FixtureBrain:
             "gate": [f"fixture-G{i}" for i in range(4)],
         }
 
+    def atlas(self) -> dict:
+        """Schematic cell positions for the dashboard. NOT anatomy: the fixture
+        has no brain; positions only give the 64 cells a stable place inside a
+        stylised fly-brain outline. Activity values shown on them are real."""
+        pos = np.zeros((self.N, 3), dtype=np.float32)
+        rng = np.random.default_rng(int.from_bytes(hashlib.sha256(b"flybrain-fixture-atlas").digest()[:8], "big"))
+        for i in self.LEFT:
+            pos[i] = [-0.28, -0.12, 0.18] + rng.normal(0, 0.05, 3)
+        for i in self.RIGHT:
+            pos[i] = [0.28, -0.12, 0.18] + rng.normal(0, 0.05, 3)
+        for i in self.GATE:
+            pos[i] = [0.0, -0.02, 0.24] + rng.normal(0, 0.03, 3)
+        for i in self.OTHER:
+            # scattered through the central brain and optic lobes
+            region = rng.integers(0, 3)
+            centre = [[0, 0.05, 0], [-0.82, 0, 0], [0.82, 0, 0]][region]
+            radii = [[0.5, 0.36, 0.3], [0.26, 0.26, 0.22], [0.26, 0.26, 0.22]][region]
+            pos[i] = np.asarray(centre) + rng.uniform(-1, 1, 3) * np.asarray(radii) * 0.8
+        return {
+            "model": FIXTURE_MODEL,
+            "schematic": True,
+            "note": "Fixture backend: positions are a schematic layout, not anatomy. Spike counts shown on them are the recorded values.",
+            "n": int(self.N),
+            "cells": {"left": self.LEFT.tolist(), "right": self.RIGHT.tolist(), "gate": self.GATE.tolist()},
+            "positions": pos,
+        }
+
     def _jitter(self, input_sha: str) -> np.ndarray:
         seed = hashlib.sha256((self.checkpoint_sha256 + input_sha).encode()).digest()
         out = np.empty(self.N, dtype=np.float64)
@@ -145,6 +172,41 @@ class ConnectomeBrain:
         self.brain.restore(self.checkpoint_path)
         self.checkpoint_sha256 = file_sha256(self.checkpoint_path)
         self.edges = self.brain.circuit["edges"]
+
+    def atlas(self) -> dict:
+        """Soma positions for every retained neuron, from the MaleCNS annotations
+        (normalised to the unit cube, NaN where the release has no soma)."""
+        from ..neural.common import annotations
+
+        n = self.brain.n
+        pos = np.full((n, 3), np.nan, dtype=np.float32)
+        try:
+            a = annotations(self.brain.ids)
+            col = next((c for c in ("somaLocation", "position", "soma_position") if c in a.columns), None)
+            if col is not None:
+                for i, v in enumerate(a[col].tolist()):
+                    if v is None:
+                        continue
+                    if isinstance(v, str):
+                        v = [float(x) for x in v.strip("[]() ").replace(",", " ").split()]
+                    v = np.asarray(v, dtype=np.float64).ravel()
+                    if v.shape == (3,) and np.isfinite(v).all():
+                        pos[i] = v
+            ok = np.isfinite(pos).all(axis=1)
+            if ok.any():
+                centre = pos[ok].mean(axis=0)
+                scale = float(np.abs(pos[ok] - centre).max()) or 1.0
+                pos[ok] = (pos[ok] - centre) / scale
+        except Exception:  # positions are display-only; never block a run
+            pos[:] = np.nan
+        return {
+            "model": CONNECTOME_MODEL,
+            "schematic": False,
+            "note": "MaleCNS v1.0 soma positions, normalised. Neurons without a released soma position are omitted from the view.",
+            "n": int(n),
+            "cells": {k: np.asarray(v).tolist() for k, v in self.cells.items()},
+            "positions": pos,
+        }
 
     def evaluate(self, frame: np.ndarray, window_ms: int) -> tuple:
         b = self.brain
