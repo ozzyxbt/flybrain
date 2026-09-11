@@ -35,7 +35,7 @@ flybrain manifest-canonicalize my-draft.json manifests/my.json --checkpoint data
 FLYBRAIN_FULL_TEST=1 python -m pytest -q tests/test_neural.py
 ```
 
-Set `"backend": "malecns-connectome"` in the draft. The connectome path was not run for this release (see `docs/model.md`).
+Set `"backend": "malecns-connectome"` in the draft. A full connectome run (`manifests/connectome-v1.json`, 44 trials, about 2 s of wall time per 500 ms trial on an M-series laptop) is reported in [docs/connectome-run.md](docs/connectome-run.md); its audit bundle is attached to the GitHub release rather than committed (35 MB of spike arrays).
 
 ## Layout
 

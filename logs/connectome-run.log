@@ -1,0 +1,113 @@
+run connectome-v1: manifest 975e1b1bacc2674d checkpoint a1e47261eba8cb2b backend malecns-connectome
+match name r1 m1: name-fly vs name-proboscis
+  trial name-r1-m1-a1-t1: L=30.000000 R=38.000000 gate=14 [name-fly | name-proboscis] -> RIGHT
+  trial name-r1-m1-a1-t2: L=36.000000 R=36.000000 gate=19 [name-proboscis | name-fly] -> TIE
+  -> name-proboscis after 1 attempt(s)
+match name r1 m2: name-ganglion vs name-ommatidia
+  trial name-r1-m2-a1-t1: L=34.000000 R=34.000000 gate=16 [name-ganglion | name-ommatidia] -> TIE
+  trial name-r1-m2-a1-t2: L=32.000000 R=36.000000 gate=14 [name-ommatidia | name-ganglion] -> RIGHT
+  -> name-ganglion after 1 attempt(s)
+match name r2 m1: name-proboscis vs name-ganglion
+  trial name-r2-m1-a1-t1: L=30.000000 R=34.000000 gate=19 [name-proboscis | name-ganglion] -> RIGHT
+  trial name-r2-m1-a1-t2: L=36.000000 R=38.000000 gate=10 [name-ganglion | name-proboscis] -> RIGHT
+  trial name-r2-m1-a2-t1: L=34.000000 R=32.000000 gate=14 [name-proboscis | name-ganglion] -> LEFT
+  trial name-r2-m1-a2-t2: L=28.000000 R=34.000000 gate=13 [name-ganglion | name-proboscis] -> RIGHT
+  -> name-proboscis after 2 attempt(s)
+category name: name-proboscis
+match ticker r1 m1: tick-fly vs tick-neuron
+  trial ticker-r1-m1-a1-t1: L=36.000000 R=36.000000 gate=24 [tick-fly | tick-neuron] -> TIE
+  trial ticker-r1-m1-a1-t2: L=28.000000 R=32.000000 gate=26 [tick-neuron | tick-fly] -> RIGHT
+  -> tick-fly after 1 attempt(s)
+match ticker r1 m2: tick-buzz vs tick-spike
+  trial ticker-r1-m2-a1-t1: L=34.000000 R=30.000000 gate=22 [tick-buzz | tick-spike] -> LEFT
+  trial ticker-r1-m2-a1-t2: L=30.000000 R=32.000000 gate=25 [tick-spike | tick-buzz] -> RIGHT
+  -> tick-buzz after 1 attempt(s)
+match ticker r2 m1: tick-fly vs tick-buzz
+  trial ticker-r2-m1-a1-t1: L=36.000000 R=38.000000 gate=19 [tick-fly | tick-buzz] -> RIGHT
+  trial ticker-r2-m1-a1-t2: L=30.000000 R=36.000000 gate=32 [tick-buzz | tick-fly] -> RIGHT
+  -> tick-fly after 1 attempt(s)
+category ticker: tick-fly
+match logo r1 m1: logo-fly vs logo-brain
+  trial logo-r1-m1-a1-t1: L=26.000000 R=36.000000 gate=24 [logo-fly | logo-brain] -> RIGHT
+  trial logo-r1-m1-a1-t2: L=34.000000 R=32.000000 gate=15 [logo-brain | logo-fly] -> LEFT
+  -> logo-brain after 1 attempt(s)
+match logo r1 m2: logo-eye vs logo-spike
+  trial logo-r1-m2-a1-t1: L=32.000000 R=46.000000 gate=27 [logo-eye | logo-spike] -> RIGHT
+  trial logo-r1-m2-a1-t2: L=28.000000 R=36.000000 gate=31 [logo-spike | logo-eye] -> RIGHT
+  -> logo-spike after 1 attempt(s)
+match logo r2 m1: logo-brain vs logo-spike
+  trial logo-r2-m1-a1-t1: L=30.000000 R=42.000000 gate=24 [logo-brain | logo-spike] -> RIGHT
+  trial logo-r2-m1-a1-t2: L=30.000000 R=36.000000 gate=18 [logo-spike | logo-brain] -> RIGHT
+  -> logo-spike after 1 attempt(s)
+category logo: logo-spike
+match palette r1 m1: pal-terminal vs pal-ruby
+  trial palette-r1-m1-a1-t1: L=34.000000 R=30.000000 gate=16 [pal-terminal | pal-ruby] -> LEFT
+  trial palette-r1-m1-a1-t2: L=26.000000 R=28.000000 gate=21 [pal-ruby | pal-terminal] -> RIGHT
+  -> pal-terminal after 1 attempt(s)
+match palette r1 m2: pal-acid vs pal-amber
+  trial palette-r1-m2-a1-t1: L=30.000000 R=44.000000 gate=32 [pal-acid | pal-amber] -> RIGHT
+  trial palette-r1-m2-a1-t2: L=28.000000 R=32.000000 gate=16 [pal-amber | pal-acid] -> RIGHT
+  -> pal-amber after 1 attempt(s)
+match palette r2 m1: pal-terminal vs pal-amber
+  trial palette-r2-m1-a1-t1: L=30.000000 R=44.000000 gate=18 [pal-terminal | pal-amber] -> RIGHT
+  trial palette-r2-m1-a1-t2: L=24.000000 R=26.000000 gate=19 [pal-amber | pal-terminal] -> RIGHT
+  -> pal-amber after 1 attempt(s)
+category palette: pal-amber
+match description r1 m1: desc-receipts vs desc-neurons
+  trial description-r1-m1-a1-t1: L=30.000000 R=38.000000 gate=21 [desc-receipts | desc-neurons] -> RIGHT
+  trial description-r1-m1-a1-t2: L=26.000000 R=34.000000 gate=15 [desc-neurons | desc-receipts] -> RIGHT
+  trial description-r1-m1-a2-t1: L=24.000000 R=34.000000 gate=22 [desc-receipts | desc-neurons] -> RIGHT
+  trial description-r1-m1-a2-t2: L=30.000000 R=28.000000 gate=19 [desc-neurons | desc-receipts] -> LEFT
+  -> desc-neurons after 2 attempt(s)
+match description r1 m2: desc-flies vs desc-spikes
+  trial description-r1-m2-a1-t1: L=34.000000 R=38.000000 gate=13 [desc-flies | desc-spikes] -> RIGHT
+  trial description-r1-m2-a1-t2: L=32.000000 R=36.000000 gate=15 [desc-spikes | desc-flies] -> RIGHT
+  trial description-r1-m2-a2-t1: L=30.000000 R=34.000000 gate=22 [desc-flies | desc-spikes] -> RIGHT
+  trial description-r1-m2-a2-t2: L=34.000000 R=36.000000 gate=21 [desc-spikes | desc-flies] -> RIGHT
+  trial description-r1-m2-a3-t1: L=30.000000 R=30.000000 gate=16 [desc-flies | desc-spikes] -> TIE
+  trial description-r1-m2-a3-t2: L=30.000000 R=34.000000 gate=16 [desc-spikes | desc-flies] -> RIGHT
+  -> desc-flies after 3 attempt(s)
+match description r2 m1: desc-neurons vs desc-flies
+  trial description-r2-m1-a1-t1: L=30.000000 R=36.000000 gate=19 [desc-neurons | desc-flies] -> RIGHT
+  trial description-r2-m1-a1-t2: L=34.000000 R=36.000000 gate=22 [desc-flies | desc-neurons] -> RIGHT
+  -> desc-flies after 1 attempt(s)
+category description: desc-flies
+match launch_venue r1 m1: pumpfun vs pons
+  trial launch_venue-r1-m1-a1-t1: L=36.000000 R=32.000000 gate=10 [pumpfun | pons] -> LEFT
+  trial launch_venue-r1-m1-a1-t2: L=30.000000 R=34.000000 gate=16 [pons | pumpfun] -> RIGHT
+  -> pumpfun after 1 attempt(s)
+category launch_venue: pumpfun
+match launch_action r1 m1: launch vs wait
+  trial launch_action-r1-m1-a1-t1: L=30.000000 R=36.000000 gate=22 [launch | wait] -> RIGHT
+  trial launch_action-r1-m1-a1-t2: L=26.000000 R=34.000000 gate=29 [wait | launch] -> RIGHT
+  trial launch_action-r1-m1-a2-t1: L=24.000000 R=32.000000 gate=28 [launch | wait] -> RIGHT
+  trial launch_action-r1-m1-a2-t2: L=24.000000 R=38.000000 gate=11 [wait | launch] -> RIGHT
+  -> launch after 2 attempt(s)
+launch windows: LAUNCH
+final decision 58eb08dafdc84422: LAUNCH
+launch intent 809cb4feff026810 persisted; expected mint 5aEMTipVgSeLfhS2oLEBSu8SjYuSoSqshfKjHv6SVL21
+launch receipt 387986a99f446b0e: mint 5aEMTipVgSeLfhS2oLEBSu8SjYuSoSqshfKjHv6SVL21 on mock (simulated)
+{
+  "run_id": "connectome-v1",
+  "manifest_sha256": "975e1b1bacc2674d72f97140955879b9d8d908250eb60a7ea988718bf5be941e",
+  "checkpoint_sha256": "a1e47261eba8cb2bd353646dd2ba048a214260e997f95c783429ebf9fae40078",
+  "backend": "malecns-connectome",
+  "final_decision_sha256": "58eb08dafdc84422a98dc1143683bf30bfb1d57244a6aa9429440e0c600938e3",
+  "identity": {
+    "name": "name-proboscis",
+    "ticker": "tick-fly",
+    "logo": "logo-spike",
+    "palette": "pal-amber",
+    "description": "desc-flies"
+  },
+  "launch_venue": "pumpfun",
+  "launch_action": "launch",
+  "outcome": "LAUNCH",
+  "launch": {
+    "status": "CONFIRMED",
+    "mint": "5aEMTipVgSeLfhS2oLEBSu8SjYuSoSqshfKjHv6SVL21",
+    "receipt_sha256": "387986a99f446b0e11d47b820f1701350faf26e5338ac2c286422f9cbfe3b4c5"
+  },
+  "chain_head": "387986a99f446b0e11d47b820f1701350faf26e5338ac2c286422f9cbfe3b4c5",
+  "chain_length": 72
+}

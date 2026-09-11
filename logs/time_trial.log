@@ -1,0 +1,4 @@
+brain ready in 3.2s; checkpoint a1e47261eba8cb2bd353646dd2ba048a214260e997f95c783429ebf9fae40078; cells L=1 R=1 gate=2
+trial 0: 2.1s wall, total spikes 519560, L=30.000000 R=38.000000 gate=14 raw=RIGHT sha=c8621a75a5cf7cec
+trial 1: 2.1s wall, total spikes 519560, L=30.000000 R=38.000000 gate=14 raw=RIGHT sha=c8621a75a5cf7cec
+atlas positions ok: 139662 / 166700

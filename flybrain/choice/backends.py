@@ -194,9 +194,23 @@ class ConnectomeBrain:
                         pos[i] = v
             ok = np.isfinite(pos).all(axis=1)
             if ok.any():
-                centre = pos[ok].mean(axis=0)
-                scale = float(np.abs(pos[ok] - centre).max()) or 1.0
-                pos[ok] = (pos[ok] - centre) / scale
+                # Display-only orientation: principal axes, longest axis
+                # vertical with the denser end (the brain, not the nerve
+                # cord) up, and annotated left somata on the viewer's left.
+                p = pos[ok].astype(np.float64)
+                centre = p.mean(axis=0)
+                p -= centre
+                _, vecs = np.linalg.eigh(np.cov(p.T))
+                axes = vecs[:, ::-1]  # columns: largest variance first
+                q = p @ axes  # q[:,0] longest, q[:,1] second, q[:,2] shortest
+                if np.median(q[:, 0]) < 0:
+                    q[:, 0] *= -1
+                sides = a["somaSide"].fillna("").to_numpy()[ok] if "somaSide" in a.columns else None
+                if sides is not None and (sides == "L").any() and q[sides == "L", 1].mean() > 0:
+                    q[:, 1] *= -1
+                out = np.column_stack([q[:, 1], q[:, 0], q[:, 2]])  # x = width, y = long axis, z = depth
+                out /= float(np.abs(out).max()) or 1.0
+                pos[ok] = out.astype(np.float32)
         except Exception:  # positions are display-only; never block a run
             pos[:] = np.nan
         return {

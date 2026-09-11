@@ -100,8 +100,7 @@ def _verify(root: Path, r: Report, resimulate: bool):
         brain = None
         ids = run["decoder_cells"]
         r.expect(all(isinstance(ids.get(k), list) and ids[k] for k in ["left", "right", "gate"]), "decoder.cell_ids_present")
-        r.warn("decoder.connectome_cells_not_reconstructed", "connectome cell indices need the prepared dataset; rates verified from recorded cell index lists if present")
-        cells = _connectome_cells(run)
+        cells = _connectome_cells(root, run, r)
 
     # 3b. Brain atlas (display asset, but bound to the run header)
     atlas_info = run.get("atlas")
@@ -321,11 +320,27 @@ def _verify(root: Path, r: Report, resimulate: bool):
         r.warn("software.source_differs_from_verifier", "run was produced by different package sources; hashes above still verified")
 
 
-def _connectome_cells(run):
-    # Connectome trials record cell IDs, not indices; without the dataset the
-    # verifier cannot map IDs to spike-array positions, so readout recompute is
-    # skipped (warned above). Hash and structure checks still apply.
-    return None
+def _connectome_cells(root, run, r):
+    """Readout cell indices for a connectome run.
+
+    Trials record cell *IDs*; the spike arrays are indexed by graph position.
+    The run's atlas (hash-bound to the run header) carries the index lists, so
+    rates can be recomputed without the 1.1 GB dataset. Without an atlas the
+    readout recompute is skipped with a warning; hash and structure checks
+    still apply.
+    """
+    info = run.get("atlas")
+    if not info:
+        r.warn("decoder.connectome_cells_not_reconstructed", "no atlas in run header; readout rates not recomputed")
+        return None
+    path = root / info["path"]
+    if not path.exists() or file_sha256(path) != info["sha256"]:
+        return None  # already reported by the atlas check
+    atlas = json.loads(path.read_text())
+    cells = {k: np.asarray(v, dtype=np.int64) for k, v in atlas["cells"].items()}
+    ok = all(len(cells[k]) == len(run["decoder_cells"][k]) for k in ["left", "right", "gate"])
+    r.expect(ok, "decoder.atlas_cell_counts_match_ids", {k: len(v) for k, v in cells.items()})
+    return cells if ok else None
 
 
 def _verify_windows(r, manifest, c, matches, prefix):

@@ -181,7 +181,9 @@
     B.colors = new Float32Array(B.n * 3);
     const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3)); g.setAttribute("color", new T.BufferAttribute(B.colors, 3));
     const big = B.n < 1000;
-    B.points = new T.Points(g, new T.PointsMaterial({ size: big ? 0.05 : 0.014, vertexColors: true, transparent: true, opacity: 0.95, blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+    B.big = big;
+    if (!big) { brain.scale.setScalar(1.05); brain.position.set(-1.9, 2.25, -0.75); }
+    B.points = new T.Points(g, new T.PointsMaterial({ size: big ? 0.05 : 0.0075, vertexColors: true, transparent: true, opacity: big ? 0.95 : 0.7, blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
     brain.add(B.points);
     // readout cells: larger markers + labels at each group's centroid
     B.hiIdx = [...B.cells.left, ...B.cells.right, ...B.cells.gate];
@@ -189,12 +191,12 @@
     B.hiIdx.forEach((idx, k) => { hpos.set([pos[idx * 3], pos[idx * 3 + 1], pos[idx * 3 + 2]], k * 3); });
     B.hiColors = hcol;
     const hg = new T.BufferGeometry(); hg.setAttribute("position", new T.BufferAttribute(hpos, 3)); hg.setAttribute("color", new T.BufferAttribute(hcol, 3));
-    B.hi = new T.Points(hg, new T.PointsMaterial({ size: big ? 0.11 : 0.05, vertexColors: true, transparent: true, opacity: 0.95, blending: T.AdditiveBlending, depthWrite: false }));
+    B.hi = new T.Points(hg, new T.PointsMaterial({ size: big ? 0.11 : 0.075, vertexColors: true, transparent: true, opacity: 0.95, blending: T.AdditiveBlending, depthWrite: false }));
     brain.add(B.hi);
-    for (const [name, idxs, color] of [["DNp20 L", B.cells.left, "#38bdf8"], ["DNp20 R", B.cells.right, "#38bdf8"], ["DNpe017 gate", B.cells.gate, "#fbbf24"]]) {
+    for (const [name, idxs, color, ox, oy] of [["DNp20 L", B.cells.left, "#38bdf8", -0.28, 0.14], ["DNp20 R", B.cells.right, "#38bdf8", 0.28, 0.14], ["DNpe017 gate", B.cells.gate, "#fbbf24", 0, 0.3]]) {
       const c = [0, 0, 0]; let m = 0;
       for (const i of idxs) if (B.positionsOk[i]) { c[0] += pos[i * 3]; c[1] += pos[i * 3 + 1]; c[2] += pos[i * 3 + 2]; m++; }
-      if (m) brain.add(label(name, 0.9, 0.11, color, c[0] / m, c[1] / m + 0.16, c[2] / m));
+      if (m) { const s = big ? 1 : 0.7; brain.add(label(name, 0.9 * s, 0.11 * s, color, c[0] / m + ox * s, c[1] / m + oy * s, c[2] / m)); }
     }
     setActivity(null);
     $("#brain-title").textContent = "BRAIN · " + (B.schematic ? "SCHEMATIC LAYOUT (fixture)" : "MaleCNS v1.0 soma positions");
@@ -209,11 +211,11 @@
     for (let i = 0; i < B.n; i++) B.target[i] = counts ? Math.log1p(counts[i]) / lmax : 0;
     if (counts) $("#brain-stats").textContent = `${firing.toLocaleString()} of ${B.n.toLocaleString()} cells fired · max ${max} spikes in ${S.readout ? S.readout.neural_window_ms : 500} ms`;
   }
-  const DIM = [0.14, 0.23, 0.38], HOT = [0.75, 0.95, 0.39], CELL = { left: [0.22, 0.74, 0.97], right: [0.22, 0.74, 0.97], gate: [0.98, 0.75, 0.14] };
+  const DIM_BIG = [0.14, 0.23, 0.38], DIM_SMALL = [0.03, 0.06, 0.12], HOT = [0.75, 0.95, 0.39], CELL = { left: [0.22, 0.74, 0.97], right: [0.22, 0.74, 0.97], gate: [0.98, 0.75, 0.14] };
   function animateBrain(t, dt) {
     brain.rotation.y += (B.dragging ? 0 : 0.0025) * dt * 60 / 1000 * 16;
     if (!B.points) return;
-    const c = B.colors, hc = B.hiColors;
+    const c = B.colors, hc = B.hiColors, DIM = B.big ? DIM_BIG : DIM_SMALL;
     for (let i = 0; i < B.n; i++) {
       B.cur[i] += (B.target[i] - B.cur[i]) * Math.min(1, dt / 220);
       const v = B.cur[i] * (0.82 + 0.18 * Math.sin(t / 45 + i * 1.7));

@@ -33,6 +33,10 @@ A persistent left/right bias `b` adds `+b` to `a1` and `−b` to `a2` and cancel
 
 `fixture-brain-v1` is a 64-cell deterministic stand-in used by Gate A and the tests: content-responsive (luminance, green, edge density, and a hash-derived “taste” of each card interior), a persistent +1.5 Hz left bias, hash-seeded jitter, and a contrast-gated DNpe017 stand-in. Its parameters live in `manifests/fixture-checkpoint-v1.json`, whose hash the manifest commits to. It is **not a connectome** and carries no biological meaning; it exists so the protocol, chain, verifier and dashboard can be exercised without the 1.1 GB dataset.
 
+## Connectome run
+
+The retained core was run end to end on this protocol (`docs/connectome-run.md`): dataset verified, genesis checkpoint at neural time 0, plasticity frozen, 44 mirrored trials, each 500 ms of neural time from the same checkpoint. Trials are bit-for-bit reproducible (same input, same spike array). The DNp20 readout in MaleCNS v1.0 is one cell per side and DNpe017 is two cells, so rates are multiples of 2 Hz at a 500 ms window. A persistent rightward readout bias is visible in the raw trials and is exactly what the mirrored score cancels.
+
 ## Not demonstrated
 
 Learning, profitable behavior, biological realism of the visual pathway, or any correspondence between simulated DNp20 activity and a fly's preferences. See `docs/claims.md`.

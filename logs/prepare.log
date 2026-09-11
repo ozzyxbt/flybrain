@@ -1,0 +1,5 @@
+Downloading annotations.feather
+Downloading neurotransmitters.feather
+Downloading edges.feather
+{"dataset": "malecns_v1", "neurons": 166700, "edges": 25582938, "synaptic_contacts": 124177617, "retina_total": 3377, "retina_mapped": 3335, "retina_unmapped": 42, "projection_confidence_median": 1.0, "projection_below_80_percent": 15, "uncertain_sign_neurons": 3718, "retina_model": "R1-R6 luminance-only. Column inferred from all contacts onto annotated L1/L2/L3; modal column. Experimental overlapping viewport projection, not calibrated retinal angles.", "visual_dynamics": "Photoreceptors and lamina are graded in vivo. This experiment uses an explicit LIF proxy, low-pass luminance drive and tonic lamina current; it is not validated fly vision.", "motor_interface": "Stonkfly uses DNp20 mean right-minus-left firing with a DNpe017 spike gate for buy/sell/hold. This is an engineered trading interface.", "training": "The compiled graph is the baseline. Runtime adds the documented candidate KC-to-MBON07/11 plasticity and R8-to-aMe12 sign assumption."}
+{"release": "MaleCNS v1.0", "neurons": 166700, "directed_edges": 25582938, "arrays_verified": true}
