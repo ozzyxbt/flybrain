@@ -9,7 +9,9 @@ import os
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 
-MAINNET_NAMES = ("mainnet", "mainnet-beta")
+# Any chain where real value moves. Robinhood Chain (pons) has no testnet, so
+# the pons adapter is build/inspect only and never reaches this guard's send path.
+MAINNET_NAMES = ("mainnet", "mainnet-beta", "robinhood-chain", "robinhood-mainnet", "chain-4663")
 
 
 class Veto(Exception):

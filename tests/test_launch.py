@@ -173,10 +173,9 @@ def test_development_defaults_cannot_reach_mainnet(monkeypatch):
 
 
 def test_unimplemented_adapters_refuse_to_construct():
-    from flybrain.launch.pons import PonsAdapter
     from flybrain.launch.pumpfun import PumpFunAdapter
     from flybrain.launch.solana_devnet import SolanaDevnetMintAdapter
 
-    for cls in [SolanaDevnetMintAdapter, PumpFunAdapter, PonsAdapter]:
+    for cls in [SolanaDevnetMintAdapter, PumpFunAdapter]:
         with pytest.raises(NotImplementedError):
             cls()

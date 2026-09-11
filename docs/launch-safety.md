@@ -2,7 +2,7 @@
 
 ## Where this build can launch
 
-Nowhere real. The only working adapter is `MockLaunchAdapter` (`network = mock`). `SolanaDevnetMintAdapter` (Gate B), `PumpFunAdapter` (Gate C) and `PonsAdapter` (unidentified) refuse to construct. `LaunchSettings` defaults are `LIVE_LAUNCH=false`, `NETWORK=mock`, `MAX_SOL_SPEND=0.05`, `INITIAL_DEV_BUY=0`, and `LaunchGuard.check_settings` vetoes `LIVE_LAUNCH=true`, any mainnet network name, any network outside the allowlist, a cap above 1 SOL, and any dev buy that is not explicitly disclosed.
+Nowhere real. The only working adapter is `MockLaunchAdapter` (`network = mock`). `SolanaDevnetMintAdapter` (Gate B) and `PumpFunAdapter` (Gate C) refuse to construct. `PonsAdapter` (pons v2 on Robinhood Chain, see `docs/pons.md`) builds and inspects an unsigned `launchToken` call but its `submit` always rejects; Robinhood Chain is treated as mainnet by the guard. `LaunchSettings` defaults are `LIVE_LAUNCH=false`, `NETWORK=mock`, `MAX_SOL_SPEND=0.05`, `INITIAL_DEV_BUY=0`, and `LaunchGuard.check_settings` vetoes `LIVE_LAUNCH=true`, any mainnet network name, any network outside the allowlist, a cap above 1 SOL, and any dev buy that is not explicitly disclosed.
 
 ## Order of operations (`flybrain/launch/pipeline.py`)
 

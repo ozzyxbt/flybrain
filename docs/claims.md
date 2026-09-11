@@ -21,7 +21,7 @@ Viral copy (“A fly brain launched a coin.”, “166,700 neurons. One terrible
 - That the retained MaleCNS graph reproduces biological fly behavior or vision. Transmitter signs, LIF photoreceptors and the RGB adapter are modeling assumptions (see `docs/model.md`).
 - Any return, price support, buyback, profit or “guaranteed” anything.
 - That a **fixture-backend** run says anything about the connectome. The fixture is a deterministic stand-in for exercising the protocol and audit trail; every artifact it produces is labeled `fixture-brain-v1`.
-- That PumpPortal or any third-party endpoint is an official Pump.fun API, or that “Pons” has been identified.
+- That PumpPortal or any third-party endpoint is an official Pump.fun API, or that FLYBRAIN is affiliated with or endorsed by pons.
 
 ## What an LLM may do
 

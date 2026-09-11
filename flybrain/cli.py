@@ -43,6 +43,14 @@ def main(argv=None):
     mc.add_argument("out", type=Path)
     mc.add_argument("--checkpoint", type=Path, help="Fill brain_checkpoint_sha256 from this file")
 
+    pp = sub.add_parser("pons-preview", help="Build and inspect the unsigned pons v2 launchToken call for a run's final decision; never submits")
+    pp.add_argument("--run", type=Path, required=True)
+    pp.add_argument("--rpc", help="Read-only JSON-RPC for chain id, launchFee() and the economics pin (optional)")
+    pp.add_argument("--creator-fee-recipient", help="Disclosed treasury address that receives pons creator fees")
+    pp.add_argument("--launch-config-id", type=int, default=0)
+    pp.add_argument("--logo-uri", help="Hosted logo URL for the token's logo() field")
+    pp.add_argument("--out", type=Path)
+
     sub.add_parser("prepare", help="Download and compile MaleCNS v1.0 (about 1.1 GB; connectome backend only)")
     sub.add_parser("verify-data", help="Verify the prepared connectome dataset")
     ck = sub.add_parser("checkpoint", help="Create the frozen genesis checkpoint for the connectome backend")
@@ -101,6 +109,32 @@ def main(argv=None):
         mm.validate(draft)
         print(write_canonical(a.out, draft))
         return 0
+    if a.command == "pons-preview":
+        from .commitments.canonical import load_canonical
+        from .launch.base import build_intent
+        from .launch.pons import NETWORK, PonsAdapter
+        from .risk.policy import LaunchSettings
+
+        final, final_sha = load_canonical(a.run / "final" / "decision.json")
+        manifest, _ = load_canonical(a.run / "manifest.json")
+        if final["outcome"] != "LAUNCH" or final["launch_venue"] != "pons":
+            raise SystemExit(f"Run's final decision is {final['outcome']} with venue {final['launch_venue']}; pons preview only applies to a LAUNCH on pons")
+        logo = a.run / "final" / "logo.png"
+        from .choice.renderer import load_png
+        from .commitments.canonical import sha256_hex
+
+        logo_sha = sha256_hex(load_png(logo).tobytes()) if logo.exists() else "0" * 64
+        settings = LaunchSettings(network=NETWORK, allowed_networks=())
+        intent = build_intent(final, final_sha, manifest, final["run_id"], settings, logo_sha)
+        adapter = PonsAdapter(a.run / "launch" / "pons-ledger", rpc=a.rpc, creator_fee_recipient=a.creator_fee_recipient, launch_config_id=a.launch_config_id, logo_uri=a.logo_uri)
+        pre = adapter.preflight(intent)
+        unsigned = adapter.build_unsigned(intent)
+        export = adapter.export(intent, unsigned, pre)
+        out = a.out or (a.run / "launch" / "pons-preview.json")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(export, indent=2) + "\n")
+        print(json.dumps({"written": str(out), "preflight_ok": pre.ok, "inspection_problems": export["inspection"], "selector": unsigned.instructions[0]["data"]["tx"]["selector"], "calldata_sha256": unsigned.payload_sha256, "salt": unsigned.instructions[0]["data"]["salt"]}, indent=2))
+        return 0 if pre.ok and not export["inspection"] else 1
     if a.command in ("prepare", "verify-data"):
         from .neural.data import prepare, verify
 

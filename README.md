@@ -21,6 +21,10 @@ No wallet, network or dataset needed. Runs use the `fixture-brain-v1` backend (a
 
 Two precommitted manifests ship: `manifests/genesis-v1.json` (six names; the fixture ended `NO_DECISION` on the name category, so `NO_LAUNCH`) and `manifests/gate-a-demo-v1.json` (four names; ended in a mock launch). Both outcomes are real outputs of the fixed protocol and are reported as such.
 
+## Venues
+
+Pump.fun: adapter gated until the official program/API review. pons: identified as an EVM launch protocol on Robinhood Chain (chain id 4663); `flybrain/launch/pons.py` builds and inspects the unsigned v2 `launchToken` call and never submits (`flybrain pons-preview`). Details and consequences in [docs/pons.md](docs/pons.md). Venue selection stays in simulation mode.
+
 ## Connectome backend
 
 ```sh
