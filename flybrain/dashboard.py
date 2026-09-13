@@ -88,6 +88,8 @@ def make_handler(run_dir: Path, pages=None):
             path = self.path.split("?", 1)[0]
             if path in pages:
                 return self._send(200, (WEB / pages[path]).read_bytes(), "text/html; charset=utf-8")
+            if path == "/og.png" and (WEB / "party" / "og.png").exists():
+                return self._send(200, (WEB / "party" / "og.png").read_bytes(), "image/png")
             if path in ("/api/index", "/api/index.json"):
                 return self._send(200, json.dumps(index(run_dir)).encode(), "application/json")
             if path == "/api/verify":
@@ -106,6 +108,24 @@ def make_handler(run_dir: Path, pages=None):
                 target = (run_dir / path[len("/run/") :]).resolve()
                 if target.is_file() and target.is_relative_to(run_dir):
                     return self._send(200, target.read_bytes(), mimetypes.guess_type(str(target))[0] or "application/octet-stream")
+            return self._send(404, b"not found", "text/plain")
+
+        def do_POST(self):
+            # Development helper: the page posts a rendered PNG of the scene and
+            # it is written under <run>/snapshots/. Local server only.
+            path = self.path.split("?", 1)[0]
+            if path.startswith("/api/snapshot/") and self.server.server_address[0] in ("127.0.0.1", "localhost"):
+                name = Path(path[len("/api/snapshot/") :]).name
+                if not name.endswith(".png") or "/" in name:
+                    return self._send(400, b"bad name", "text/plain")
+                length = int(self.headers.get("Content-Length", "0"))
+                if length <= 0 or length > 20_000_000:
+                    return self._send(400, b"bad length", "text/plain")
+                data = self.rfile.read(length)
+                target = run_dir / "snapshots" / name
+                target.parent.mkdir(exist_ok=True)
+                target.write_bytes(data)
+                return self._send(200, json.dumps({"written": str(target), "bytes": len(data)}).encode(), "application/json")
             return self._send(404, b"not found", "text/plain")
 
     return Handler
@@ -148,6 +168,7 @@ def export_party(run_dir, out_dir, cname=None):
     shutil.copytree(WEB / "vendor", out / "static" / "vendor")
     for name in ["party.css", "party.js"]:
         (out / name).unlink()
+    # og.png stays at the site root (referenced absolutely by the meta tags)
     for sub in ["frames", "spikes", "brain", "throws"]:
         if (run_dir / sub).exists():
             shutil.copytree(run_dir / sub, out / "run" / sub)

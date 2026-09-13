@@ -289,7 +289,19 @@
     document.querySelectorAll("[data-speed]").forEach((b) => (b.onclick = () => { S.speed = parseFloat(b.dataset.speed); document.querySelectorAll("[data-speed]").forEach((x) => x.classList.toggle("on", x === b)); }));
     const stateEl = $("#state"); if (stateEl && stateEl.hidden) state = () => {};
     requestAnimationFrame(loop);
+    const params = new URLSearchParams(location.search);
+    if (params.get("pose") === "drink") {
+      // static hero pose for the link-preview image: fly at the beer, mid-drink
+      const last = [...S.events].reverse().find((e) => e.type === "throw" && !e.a.hit) || S.events.find((e) => e.type === "throw");
+      if (last) { setCups(last.a.cups_before); S.drinks = 2; S.hits = S.events.filter((e) => e.type === "throw" && e.a.hit).length; score(last.a.throw); showFrame(last.a); parseNpy("run/" + last.a.spike_path).then(setActivity); readout(last.a); }
+      S.fly.x = BEER[0] - 0.34; S.fly.z = BEER[1] + 0.02; S.fly.target = S.fly.x; S.fly.tz = S.fly.z; S.fly.yaw = 0; S.fly.mode = "drink"; S.fly.drunk = 0.4;
+      beerLiquid.scale.y = 0.6; beerLiquid.position.y = 0.21 * 0.6; foam.position.y = 0.42 * 0.6 + 0.03;
+      $("#play").style.display = "none"; say("*glug glug*", 1e9); state("");
+      return;
+    }
     S.playing = true; $("#play").textContent = "⏸ pause"; play();
   }
+  // dev helper: window.FLYPONG.snapshot("og.png") posts the current frame to the local server
+  window.FLYPONG = { snapshot(name) { renderer.render(scene, camera); return new Promise((res) => renderer.domElement.toBlob((blob) => fetch("api/snapshot/" + name, { method: "POST", body: blob }).then((r) => r.json()).then(res), "image/png")); } };
   boot().catch((e) => { state("ERROR " + e); console.error(e); });
 })();
