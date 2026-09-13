@@ -74,7 +74,7 @@
   const ballMirror = new T.Mesh(new T.SphereGeometry(0.28, 20, 14), M({ color: 0xffffff, metalness: 1, roughness: 0.15, flatShading: true })); ballMirror.position.set(0, 4.3, -0.4); scene.add(ballMirror);
   const chain = new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 1.2, 6), M({ color: 0x8888aa })); chain.position.set(0, 5.0, -0.4); scene.add(chain);
   // table (long axis z), neon edge
-  const table = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 5.2), M({ color: 0x1f7a4a, roughness: 0.65 })); table.position.set(0, 0.84, -0.5); table.castShadow = true; table.receiveShadow = true; scene.add(table);
+  const table = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 5.2), M({ color: 0x0f4a2e, roughness: 0.65 })); table.position.set(0, 0.84, -0.5); table.castShadow = true; table.receiveShadow = true; scene.add(table);
   const edge = new T.Mesh(new T.BoxGeometry(2.52, 0.06, 5.32), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 0.9 })); edge.position.set(0, 0.79, -0.5); scene.add(edge);
   for (const [x, z] of [[-1.05, 1.9], [1.05, 1.9], [-1.05, -2.9], [1.05, -2.9]]) { const leg = new T.Mesh(new T.BoxGeometry(0.12, 0.8, 0.12), M({ color: 0x0f0a22 })); leg.position.set(x, 0.4, z); scene.add(leg); }
   const midline = new T.Mesh(new T.PlaneGeometry(2.3, 0.03), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 })); midline.rotation.x = -Math.PI / 2; midline.position.set(0, 0.905, -0.5); scene.add(midline);
