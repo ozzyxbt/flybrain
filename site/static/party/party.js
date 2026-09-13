@@ -6,36 +6,36 @@
   const stage = document.getElementById("stage3d");
   if (!window.THREE || !window.FLYLIB) { $("#state").textContent = "three.js / flylib failed to load"; return; }
   const T = window.THREE, L = window.FLYLIB;
-  const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x3a2a5e, exposure: 1.15, fov: 30, fill: true });
+  const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x0a0614, exposure: 1.1, fov: 30, fill: true });
   camera.position.set(1.2, 3.9, -9.0); camera.lookAt(-0.1, 1.0, 0.7);
-  scene.fog = new T.Fog(0x4a3470, 9, 20);
+  scene.fog = new T.Fog(0x16102a, 10, 22);
   key.intensity = 0.7; key.color.set(0xffd9c2); spot.intensity = 2.0; spot.color.set(0xffe0f0);
   const M = (o) => new T.MeshStandardMaterial(o);
 
   // ------------------------------------------------------------- club
-  const floor = new T.Mesh(new T.PlaneGeometry(20, 14), M({ color: 0x2c2150, roughness: 0.4, metalness: 0.35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  const grid = new T.GridHelper(20, 40, 0x8a5aa8, 0x4a3a78); grid.position.y = 0.005; scene.add(grid);
+  const floor = new T.Mesh(new T.PlaneGeometry(20, 14), M({ color: 0x0f0a1e, roughness: 0.4, metalness: 0.35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const grid = new T.GridHelper(20, 40, 0x5a3a78, 0x241a44); grid.position.y = 0.005; scene.add(grid);
   // sunset backdrop behind the bar: coral sky, big low sun, palm silhouettes
   const sky = document.createElement("canvas"); sky.width = 1024; sky.height = 512;
-  { const g = sky.getContext("2d"); const grad = g.createLinearGradient(0, 0, 0, 512); grad.addColorStop(0, "#eb9998"); grad.addColorStop(0.35, "#d98aa9"); grad.addColorStop(0.62, "#a373c0"); grad.addColorStop(0.85, "#6f70a2"); grad.addColorStop(1, "#5d649c"); g.fillStyle = grad; g.fillRect(0, 0, 1024, 512);
+  { const g = sky.getContext("2d"); const grad = g.createLinearGradient(0, 0, 0, 512); grad.addColorStop(0, "#e08f92"); grad.addColorStop(0.3, "#c47d9f"); grad.addColorStop(0.55, "#8a5fa8"); grad.addColorStop(0.8, "#4a3d78"); grad.addColorStop(1, "#231c46"); g.fillStyle = grad; g.fillRect(0, 0, 1024, 512);
     const sun = g.createRadialGradient(560, 330, 10, 560, 330, 150); sun.addColorStop(0, "#fff0c8"); sun.addColorStop(0.35, "#ffc2a0"); sun.addColorStop(1, "rgba(255,170,160,0)"); g.fillStyle = sun; g.fillRect(360, 150, 400, 380);
     g.fillStyle = "#ffdcb0"; g.beginPath(); g.arc(560, 330, 62, 0, Math.PI * 2); g.fill();
     for (let i = 0; i < 5; i++) { g.fillStyle = "rgba(93,100,156,0.55)"; g.fillRect(0, 300 + i * 12, 1024, 3); }
-    g.fillStyle = "#3a2a5e";
+    g.fillStyle = "#12091f";
     const palm = (x, h, lean) => { g.beginPath(); g.moveTo(x, 512); g.quadraticCurveTo(x + lean * 0.5, 512 - h * 0.6, x + lean, 512 - h); g.lineTo(x + lean + 8, 512 - h); g.quadraticCurveTo(x + lean * 0.5 + 8, 512 - h * 0.6, x + 10, 512); g.fill();
       for (let a = -2.6; a <= 0.4; a += 0.45) { g.beginPath(); g.ellipse(x + lean + 4 + Math.cos(a) * 40, 512 - h - 4 + Math.sin(a) * 26, 46, 9, a, 0, Math.PI * 2); g.fill(); } };
     palm(120, 300, 28); palm(250, 230, -18); palm(820, 320, -30); palm(940, 240, 14);
-    g.fillStyle = "#3a2a5e"; for (let x = 0; x < 1024; x += 1) { const h = 20 + 18 * Math.abs(Math.sin(x * 0.02)) + 10 * Math.abs(Math.sin(x * 0.11)); g.fillRect(x, 512 - h, 1, h); } }
+    g.fillStyle = "#12091f"; for (let x = 0; x < 1024; x += 1) { const h = 20 + 18 * Math.abs(Math.sin(x * 0.02)) + 10 * Math.abs(Math.sin(x * 0.11)); g.fillRect(x, 512 - h, 1, h); } }
   const skyTex = new T.CanvasTexture(sky); skyTex.colorSpace = T.SRGBColorSpace;
   const wall = new T.Mesh(new T.PlaneGeometry(20, 10), new T.MeshBasicMaterial({ map: skyTex })); wall.position.set(0, 4.5, 3.62); wall.rotation.y = Math.PI; scene.add(wall);
   for (const [y, c] of [[2.2, 0xeb9998], [2.35, 0xffd27a], [2.5, 0xa373c0]]) { const s = new T.Mesh(new T.PlaneGeometry(20, 0.05), M({ color: c, emissive: c, emissiveIntensity: 1.2 })); s.position.set(0, y, 3.59); s.rotation.y = Math.PI; scene.add(s); }
   // bar counter, shelves and bottles behind the fly; hanging lamps over the table
-  const counter = new T.Mesh(new T.BoxGeometry(7.5, 1.05, 0.9), M({ color: 0x4a2a55, roughness: 0.5, metalness: 0.2 })); counter.position.set(0, 0.52, 3.0); counter.castShadow = true; scene.add(counter);
+  const counter = new T.Mesh(new T.BoxGeometry(7.5, 1.05, 0.9), M({ color: 0x1c1026, roughness: 0.5, metalness: 0.2 })); counter.position.set(0, 0.52, 3.0); counter.castShadow = true; scene.add(counter);
   const counterTop = new T.Mesh(new T.BoxGeometry(7.6, 0.06, 1.0), M({ color: 0xffd27a, emissive: 0xffb98a, emissiveIntensity: 0.5 })); counterTop.position.set(0, 1.07, 3.0); scene.add(counterTop);
-  for (const y of [1.9, 2.55]) { const shelf = new T.Mesh(new T.BoxGeometry(6.4, 0.05, 0.35), M({ color: 0x5a3a6a })); shelf.position.set(0, y, 3.42); scene.add(shelf);
+  for (const y of [1.9, 2.55]) { const shelf = new T.Mesh(new T.BoxGeometry(6.4, 0.05, 0.35), M({ color: 0x20142c })); shelf.position.set(0, y, 3.42); scene.add(shelf);
     const glowStrip = new T.Mesh(new T.PlaneGeometry(6.4, 0.03), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 1.5 })); glowStrip.position.set(0, y - 0.03, 3.24); scene.add(glowStrip); }
   // back-bar: mirror panel with warm backlight, real bottle silhouettes with labels, hanging glasses
-  const backPanel = new T.Mesh(new T.PlaneGeometry(6.6, 1.9), M({ color: 0x7e3a63, metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0.85 })); backPanel.position.set(0, 2.55, 3.58); backPanel.rotation.y = Math.PI; scene.add(backPanel);
+  const backPanel = new T.Mesh(new T.PlaneGeometry(6.6, 1.9), M({ color: 0x2a1436, metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0.9 })); backPanel.position.set(0, 2.55, 3.58); backPanel.rotation.y = Math.PI; scene.add(backPanel);
   for (let i = 0; i < 7; i++) { const bl = new T.Mesh(new T.PlaneGeometry(0.04, 1.8), M({ color: 0xffb84f, emissive: 0xffb84f, emissiveIntensity: 0.9, transparent: true, opacity: 0.55 })); bl.position.set(-3.0 + i * 1.0, 2.55, 3.57); bl.rotation.y = Math.PI; scene.add(bl); }
   const bottleColors = [0x1f7a3a, 0xb86a1c, 0x8a1c2c, 0x2b5fb8, 0x5a2a8a, 0xd9c47a, 0x1d7c86, 0x9b3d5a, 0x6b8f2a, 0xc0562b];
   const glassMat = (col) => new T.MeshPhysicalMaterial({ color: col, transparent: true, opacity: 0.72, roughness: 0.12, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.1 });
