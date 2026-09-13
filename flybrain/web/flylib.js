@@ -109,20 +109,22 @@
     });
     fly.scale.setScalar(0.95);
   })();
-  function animateFly(t, moving, mode, drunk = 0) {
+  function animateFly(t, moving, mode, drunk = 0, collapse = 0) {
     const flapping = moving || mode === "party" || mode === "press";
     const flap = flapping ? Math.sin(t / 22) * 0.75 : 0.12 + Math.sin(t / 900) * 0.04 + (Math.floor(t / 1600) % 4 === 0 ? Math.sin(t / 26) * 0.5 : 0);
-    for (const w of flyParts.wings) w.pivot.rotation.x = -w.side * flap + (drunk ? Math.sin(t / 140 + w.side) * 0.08 * drunk : 0);
-    if (flyParts.head) { flyParts.head.rotation.y = Math.sin(t / 700) * 0.08 + (drunk ? Math.sin(t / 230) * 0.12 * drunk : 0); flyParts.head.rotation.z = drunk ? Math.sin(t / 310) * 0.1 * drunk : 0; }
+    for (const w of flyParts.wings) w.pivot.rotation.x = (-w.side * flap + (drunk ? Math.sin(t / 140 + w.side) * 0.08 * drunk : 0)) * (1 - collapse) + (-w.side * 0.95) * collapse;
+    if (flyParts.head) { flyParts.head.rotation.y = (Math.sin(t / 700) * 0.08 + (drunk ? Math.sin(t / 230) * 0.12 * drunk : 0)) * (1 - collapse); flyParts.head.rotation.z = (drunk ? Math.sin(t / 310) * 0.1 * drunk : 0) * (1 - collapse); flyParts.head.rotation.x = 0.35 * collapse; }
     fly.rotation.z = drunk ? Math.sin(t / 420) * 0.05 * drunk : 0;
     fly.rotation.x = drunk ? Math.sin(t / 530) * 0.03 * drunk : 0;
     for (const L of flyParts.legs) {
       const ph = moving ? t / 55 + L.i * 2.1 : 0;
       const swing = moving ? Math.sin(ph) * 0.1 : 0, up = moving ? Math.max(0, Math.cos(ph)) * 0.06 : 0;
       const r = L.root, s = L.side, spread = 0.36 - Math.abs(L.k - 1) * 0.04;
-      const knee = [r[0] + swing * 0.6 + (L.k - 1) * -0.12, r[1] + 0.14, r[2] + s * 0.22];
-      const ankle = [r[0] + swing + (L.k - 1) * -0.2, -0.38 + up, r[2] + s * spread];
-      const foot = [ankle[0] + 0.12, -0.4 + up * 0.5, ankle[2] + s * 0.04];
+      const c = collapse;
+      // normal stance blended with a splayed, flat-on-the-table pose
+      const knee = [r[0] + swing * 0.6 + (L.k - 1) * -0.12, r[1] + 0.14 * (1 - c) + 0.03 * c, r[2] + s * (0.22 + 0.12 * c)];
+      const ankle = [r[0] + swing + (L.k - 1) * (-0.2 + 0.1 * c), (-0.38 + up) * (1 - c) + -0.2 * c, r[2] + s * (spread + 0.22 * c)];
+      const foot = [ankle[0] + 0.12 + 0.06 * c, (-0.4 + up * 0.5) * (1 - c) + -0.2 * c, ankle[2] + s * (0.04 + 0.08 * c)];
       place(L.upper, r, knee, 0.017); place(L.lower, knee, ankle, 0.011); place(L.foot, ankle, foot, 0.006);
       L.knee.position.set(knee[0], knee[1], knee[2]);
     }

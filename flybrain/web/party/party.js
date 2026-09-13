@@ -7,7 +7,7 @@
   if (!window.THREE || !window.FLYLIB) { $("#state").textContent = "three.js / flylib failed to load"; return; }
   const T = window.THREE, L = window.FLYLIB;
   const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x05020a, exposure: 1.1, fov: 36 });
-  camera.position.set(-1.1, 2.7, 4.7); camera.lookAt(0.55, 1.15, -0.7);
+  camera.position.set(0.9, 2.6, -4.9); camera.lookAt(-0.15, 1.15, 0.5);
   scene.fog = new T.Fog(0x05020a, 8, 16);
   key.intensity = 0.55; spot.intensity = 2.2; spot.color.set(0xfff0ff);
   const M = (o) => new T.MeshStandardMaterial(o);
@@ -15,8 +15,8 @@
   // ------------------------------------------------------------- club
   const floor = new T.Mesh(new T.PlaneGeometry(20, 14), M({ color: 0x0a0616, roughness: 0.35, metalness: 0.4 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
   const grid = new T.GridHelper(20, 40, 0x3b1d6e, 0x1c0e38); grid.position.y = 0.005; scene.add(grid);
-  const wall = new T.Mesh(new T.PlaneGeometry(20, 9), M({ color: 0x0b0618, roughness: 1 })); wall.position.set(0, 4.5, -3.6); scene.add(wall);
-  for (const [y, c] of [[2.2, 0xff4fd8], [2.35, 0x4ff2ff], [2.5, 0xc8ff5a]]) { const s = new T.Mesh(new T.PlaneGeometry(20, 0.05), M({ color: c, emissive: c, emissiveIntensity: 1.2 })); s.position.set(0, y, -3.59); scene.add(s); }
+  const wall = new T.Mesh(new T.PlaneGeometry(20, 9), M({ color: 0x0b0618, roughness: 1 })); wall.position.set(0, 4.5, 3.6); wall.rotation.y = Math.PI; scene.add(wall);
+  for (const [y, c] of [[2.2, 0xff4fd8], [2.35, 0x4ff2ff], [2.5, 0xc8ff5a]]) { const s = new T.Mesh(new T.PlaneGeometry(20, 0.05), M({ color: c, emissive: c, emissiveIntensity: 1.2 })); s.position.set(0, y, 3.59); s.rotation.y = Math.PI; scene.add(s); }
   // disco lights
   const discoLights = [];
   for (const [c, off] of [[0xff4fd8, 0], [0x4ff2ff, 2.1], [0xc8ff5a, 4.2]]) {
@@ -48,6 +48,7 @@
   const ball = new T.Mesh(new T.SphereGeometry(0.06, 16, 12), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4 })); ball.castShadow = true; ball.visible = false; scene.add(ball);
   const flyRig = L.buildFly(scene);
   const fly = flyRig.group;
+  fly.scale.setScalar(0.95 * 0.85);
 
   // -------------------------------------------------- CNS + meter
   const { CNS, loadAtlas, animateCNS } = L;
@@ -63,7 +64,7 @@
   }
 
   // ------------------------------------------------------------- state
-  const S = { events: [], i: 0, playing: false, speed: 1, fly: { x: 0, target: 0, yaw: Math.PI / 2, targetYaw: Math.PI / 2, mode: "idle", drunk: 0 }, ball: null, splashes: [], confetti: [], run: null, cups: 6, drinks: 0, hits: 0, hot: 0 };
+  const S = { gen: 0, events: [], i: 0, playing: false, speed: 1, collapse: 0, fly: { x: 0, target: 0, yaw: Math.PI / 2, targetYaw: Math.PI / 2, mode: "idle", drunk: 0 }, ball: null, splashes: [], confetti: [], run: null, cups: 6, drinks: 0, hits: 0, hot: 0 };
   const now = () => performance.now();
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms / S.speed));
   function say(t, ms) { const b = $("#bubble"); b.textContent = t; b.style.display = "block"; clearTimeout(say.timer); say.timer = setTimeout(() => (b.style.display = "none"), ms / S.speed); }
@@ -95,42 +96,53 @@
   // ------------------------------------------------------------- events
   async function showFrame(a) { const img = await loadImage("/run/" + a.frame_path); if (img) { const c = $("#flycam").getContext("2d"); c.imageSmoothingEnabled = false; c.drawImage(img, 0, 0, 320, 180); } }
   async function runThrow(a) {
+    const g = S.gen;
     state(`THROW ${a.throw} · ${a.cups_before.length} cups · ${a.drinks_before} drinks`);
     setCups(a.cups_before); S.drinks = a.drinks_before; S.fly.drunk = Math.min(1.5, a.drinks_before * 0.3); score(a.throw);
     S.fly.target = 0; S.fly.mode = "idle";
     const [, spikes] = await Promise.all([showFrame(a), parseNpy("/run/" + a.spike_path)]);
+    if (g !== S.gen) return;
     say(a.drinks_before >= 4 ? "*hic* …which cup…" : a.drinks_before >= 2 ? "two tables? ok." : "focus.", 900);
     await sleep(400);
+    if (g !== S.gen) return;
     setActivity(spikes); readout(a);
     $("#cns-rates").textContent = `DNp20 L ${parseFloat(a.left_hz).toFixed(1)} · R ${parseFloat(a.right_hz).toFixed(1)} Hz · gate ${a.gate_spikes}`;
     if (a.reward_applied_ms) { S.hot = now(); flash(500); banner(`✨ DOPAMINE · PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz`, "#ff4fd8", 1600); feed(`✨ dopamine: PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz after the hit`, "dopa"); S.fly.mode = "party"; await sleep(900); S.fly.mode = "idle"; }
+    if (g !== S.gen) return;
     await sleep(500);
+    if (g !== S.gen) return;
     const lx = parseFloat(a.landing_x) * 0.8, tz = a.hit ? cupPos(a.cup)[1] : -2.65;
     S.ball = { t0: now(), dur: 1100 / S.speed, from: [fly.position.x + 0.35, 1.55, 0.45], to: [lx, a.hit ? 1.25 : 0.96, tz], hit: a.hit };
     ball.visible = true; S.fly.mode = "press"; say(a.gate_spikes ? "THROW!" : "…gate silent", 800);
     await sleep(1150); ball.visible = false; S.fly.mode = "idle";
+    if (g !== S.gen) return;
     if (a.hit) {
       const g = cups.get(cupKey(a.cup)); if (g) { splash(g.position.x, g.position.z); g.userData.sink = now(); }
       S.hits++; spawnConfetti(80); flash(300);
       banner(`🎯 HIT · cup ${a.cup[0]} row ${a.cup[1]}`, "#c8ff5a", 1400); feed(`🎯 throw ${a.throw}: hit cup (${a.cup[0]}, row ${a.cup[1]})`, "hit");
       say("LET'S GOOO", 1200); S.fly.mode = "party"; await sleep(1200); S.fly.mode = "idle";
+      if (g !== S.gen) return;
       setCups(a.cups_after); score(a.throw);
     } else {
       banner(a.gate_spikes ? `💨 miss · landed at ${parseFloat(a.landing_x).toFixed(2)}` : "💨 miss · no gate spike, no throw", "#ffb84f", 1400);
       feed(`🍺 throw ${a.throw}: miss → drink #${a.drinks_after}`, "miss");
       say("ugh. drink.", 1000);
       S.fly.target = 0.62; S.fly.mode = "walk"; await sleep(900);
+      if (g !== S.gen) return;
       S.fly.mode = "drink"; say("*glug glug*", 1300); await sleep(1300);
+      if (g !== S.gen) return;
       S.drinks = a.drinks_after; S.fly.drunk = Math.min(1.5, S.drinks * 0.3); score(a.throw);
       say(S.drinks >= 4 ? "*hic*" : S.drinks >= 2 ? "whoa." : "fine.", 900);
       S.fly.mode = "idle"; S.fly.target = 0; await sleep(700);
+      if (g !== S.gen) return;
     }
   }
   async function runEvent(ev) {
-    const a = ev.a;
+    const a = ev.a; const g = S.gen;
     if (ev.type === "calibration") {
       state("CALIBRATING · empty table");
       const [, spikes] = await Promise.all([showFrame(a), parseNpy("/run/" + a.spike_path)]);
+      if (g !== S.gen) return;
       setActivity(spikes); $("#cns-rates").textContent = `calibration · L ${parseFloat(a.left_hz).toFixed(1)} · R ${parseFloat(a.right_hz).toFixed(1)} Hz`; $("#hz-l").textContent = parseFloat(a.left_hz).toFixed(1) + " Hz"; $("#hz-r").textContent = parseFloat(a.right_hz).toFixed(1) + " Hz";
       $("#readout-note").textContent = `calibration · R−L ${parseFloat(a.bias_hz).toFixed(1)} Hz becomes the aim zero`;
       banner(`🎯 calibration · aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`, "#4ff2ff", 2000); feed(`🎯 calibration on the empty table: aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`);
@@ -145,6 +157,7 @@
       else if (a.result === "PASSED OUT") { S.fly.mode = "passout"; say("zzz…", 5000); }
       else { S.fly.mode = "shrug"; say("out of throws.", 4000); }
       await sleep(3000);
+      if (g !== S.gen) return;
     }
   }
   let running = false;
@@ -154,9 +167,9 @@
     if (S.i >= S.events.length) { S.playing = false; $("#play").textContent = "↺ replay"; }
     running = false;
   }
-  function reset() { S.i = 0; S.drinks = 0; S.hits = 0; S.fly.drunk = 0; S.fly.mode = "idle"; fly.rotation.z = 0; setCups(S.run.rules.cups); score(null); setActivity(null); readout(null); $("#feed").innerHTML = ""; state("ready"); }
+  function reset() { S.gen++; S.i = 0; S.drinks = 0; S.hits = 0; S.fly.drunk = 0; S.fly.mode = "idle"; S.collapse = 0; setCups(S.run.rules.cups); score(null); setActivity(null); readout(null); $("#feed").innerHTML = ""; state("ready"); }
   function skipToEnd() {
-    S.playing = false;
+    S.playing = false; S.gen++;
     const last = [...S.events].reverse().find((e) => e.type === "throw"), res = S.events.find((e) => e.type === "result");
     if (last) { setCups(last.a.cups_after); S.drinks = last.a.drinks_after; S.hits = S.events.filter((e) => e.type === "throw" && e.a.hit).length; S.fly.drunk = Math.min(1.5, S.drinks * 0.3); score(last.a.throw); parseNpy("/run/" + last.a.spike_path).then(setActivity); readout(last.a); showFrame(last.a); }
     if (res) runEvent(res);
@@ -178,9 +191,12 @@
     if (f.mode === "party") lift = Math.abs(Math.sin(t / 130)) * 0.45;
     if (f.mode === "press") { lift = 0.08; pitch = -0.35; }
     if (f.mode === "drink") pitch = 0.55 + Math.sin(t / 150) * 0.05;
-    fly.position.set(f.x, 1.27 + lift, 0.45); fly.rotation.y = f.yaw;
-    flyRig.animate(t, moving, f.mode, f.mode === "passout" ? 0 : f.drunk);
-    if (f.mode === "passout") fly.rotation.z = Math.PI * 0.5; else fly.rotation.x += pitch;
+    // pass-out: legs splay, body sinks face-down onto the table (no rolling)
+    S.collapse += ((f.mode === "passout" ? 1 : 0) - S.collapse) * Math.min(1, dt / 450);
+    const c = S.collapse;
+    fly.position.set(f.x, 1.27 + lift - 0.2 * c, 0.45); fly.rotation.y = f.yaw; fly.rotation.z = 0;
+    flyRig.animate(t, moving, f.mode, f.drunk * (1 - c), c);
+    fly.rotation.x += pitch * (1 - c) + 0.22 * c;
     if (S.ball) { const b = S.ball, u = Math.min(1, (now() - b.t0) / b.dur); ball.position.set(b.from[0] + (b.to[0] - b.from[0]) * u, b.from[1] + (b.to[1] - b.from[1]) * u + Math.sin(u * Math.PI) * 1.1, b.from[2] + (b.to[2] - b.from[2]) * u); ball.rotation.x += 0.2; if (u >= 1) S.ball = null; }
     for (const [, g] of cups) if (g.userData.sink) { const u = Math.min(1, (now() - g.userData.sink) / 600); g.scale.set(1 - u * 0.4, 1 - u, 1 - u * 0.4); }
     for (let i = S.splashes.length - 1; i >= 0; i--) { const s = S.splashes[i], u = (now() - s.t0) / 700; if (u >= 1) { scene.remove(s.mesh); S.splashes.splice(i, 1); continue; } s.mesh.scale.setScalar(1 + u * 3); s.mesh.material.opacity = 0.9 * (1 - u); }
