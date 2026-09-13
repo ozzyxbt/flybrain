@@ -234,7 +234,7 @@
     if (moving) lift = Math.abs(Math.sin(t / 70)) * 0.02;
     if (f.mode === "party") lift = Math.abs(Math.sin(t / 130)) * 0.45;
     if (f.mode === "press") { lift = 0.08; pitch = -0.35; }
-    if (f.mode === "drink") { pitch = 0.7 + Math.sin(t / 150) * 0.06; lift = 0.02; }
+    if (f.mode === "drink") { const depth = 1 - beerLiquid.scale.y; pitch = 0.3 + 0.55 * depth + Math.sin(t / 150) * 0.05; lift = 0.02 - 0.06 * depth; }  // dips deeper as the glass empties
     // pass-out: legs splay, body sinks face-down onto the table (no rolling)
     S.collapse += ((f.mode === "passout" ? 1 : 0) - S.collapse) * Math.min(1, dt / 450);
     const c = S.collapse;

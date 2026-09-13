@@ -65,7 +65,7 @@
   const seed = (n) => { const x = Math.sin(n * 91.7 + 17.3) * 43758.5453; return x - Math.floor(x); };
   (function buildFly() {
     const shell = flat(0x3a505a), shellLight = flat(0x54687a), dark = flat(0x161d22, { metalness: 0.12 });
-    const eyeMat = flat(0xa5183a, { roughness: 0.3, metalness: 0.4, emissive: 0x3a0512, emissiveIntensity: 0.45 });
+    const eyeMat = flat(0xa5183a, { roughness: 0.3, metalness: 0.4, emissive: 0x3a0512, emissiveIntensity: 0.45 }); flyParts.eyeMat = eyeMat;
     const chitin = flat(0x24363d, { metalness: 0.22, roughness: 0.6 });
     // abdomen with segment rings
     ico(0.46, 0.2, 0.22, chitin, -0.4, -0.01, 0, fly);
@@ -81,7 +81,7 @@
       ico(0.14, 0.18, 0.125, eyeMat, 0.06, 0.02, 0.14 * side, head, 2);
       // eyelid: a shell over the top of the eye that slides down when the fly sleeps (or blinks)
       const lid = new T.Mesh(new T.SphereGeometry(1, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), flat(0x46596a, { side: T.DoubleSide }));
-      lid.position.set(0.06, 0.02, 0.14 * side); lid.scale.set(0.155, 0.02, 0.14); lid.castShadow = false; head.add(lid); flyParts.lids.push(lid);
+      lid.position.set(0.06, 0.02, 0.14 * side); lid.scale.set(0.155, 0.02, 0.14); lid.castShadow = false; lid.visible = false; head.add(lid); flyParts.lids.push(lid);
       ico(0.03, 0.022, 0.022, flat(0xe7a8a0, { roughness: 0.15, emissive: 0x7a3f55 }), 0.1, 0.12, 0.23 * side, head, 1);
       rod(head, [0.14, 0.14, 0.06 * side], [0.3, 0.26, 0.15 * side], 0.007, dark);
       ico(0.02, 0.014, 0.014, dark, 0.3, 0.26, 0.15 * side, head, 1);
@@ -118,9 +118,10 @@
     const flap = flapping ? Math.sin(t / 22) * 0.75 : 0.12 + Math.sin(t / 900) * 0.04 + (Math.floor(t / 1600) % 4 === 0 ? Math.sin(t / 26) * 0.5 : 0);
     for (const w of flyParts.wings) w.pivot.rotation.x = (-w.side * flap + (drunk ? Math.sin(t / 140 + w.side) * 0.08 * drunk : 0)) * (1 - collapse) + (-w.side * 0.95) * collapse;
     if (flyParts.lids) {
-      const blink = mode === "idle" && (t % 4200) > 4060 ? Math.sin(((t % 4200) - 4060) / 140 * Math.PI) : 0;
-      const shut = Math.max(collapse, blink);
-      for (const lid of flyParts.lids) lid.scale.y = 0.02 + 0.19 * shut;
+      // flies have no eyelids: nothing shows while awake. Asleep, the eyes just
+      // dim and a soft shade settles part-way over them for a relaxed look.
+      for (const lid of flyParts.lids) { lid.visible = collapse > 0.05; lid.scale.y = 0.02 + 0.19 * 0.4 * collapse; }
+      if (flyParts.eyeMat) flyParts.eyeMat.emissiveIntensity = 0.45 * (1 - 0.7 * collapse);
     }
     if (flyParts.head) { flyParts.head.rotation.y = (Math.sin(t / 700) * 0.08 + (drunk ? Math.sin(t / 230) * 0.12 * drunk : 0)) * (1 - collapse); flyParts.head.rotation.z = (drunk ? Math.sin(t / 310) * 0.1 * drunk : 0) * (1 - collapse); flyParts.head.rotation.x = 0.35 * collapse; }
     fly.rotation.z = drunk ? Math.sin(t / 420) * 0.05 * drunk : 0;
