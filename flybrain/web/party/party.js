@@ -6,8 +6,8 @@
   const stage = document.getElementById("stage3d");
   if (!window.THREE || !window.FLYLIB) { $("#state").textContent = "three.js / flylib failed to load"; return; }
   const T = window.THREE, L = window.FLYLIB;
-  const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x05020a, exposure: 1.1, fov: 36 });
-  camera.position.set(0.9, 2.6, -4.9); camera.lookAt(-0.15, 1.15, 0.5);
+  const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x05020a, exposure: 1.1, fov: 30, fill: true });
+  camera.position.set(1.2, 3.9, -9.0); camera.lookAt(-0.1, 1.0, 0.7);
   scene.fog = new T.Fog(0x05020a, 8, 16);
   key.intensity = 0.55; spot.intensity = 2.2; spot.color.set(0xfff0ff);
   const M = (o) => new T.MeshStandardMaterial(o);
@@ -17,6 +17,22 @@
   const grid = new T.GridHelper(20, 40, 0x3b1d6e, 0x1c0e38); grid.position.y = 0.005; scene.add(grid);
   const wall = new T.Mesh(new T.PlaneGeometry(20, 9), M({ color: 0x0b0618, roughness: 1 })); wall.position.set(0, 4.5, 3.6); wall.rotation.y = Math.PI; scene.add(wall);
   for (const [y, c] of [[2.2, 0xff4fd8], [2.35, 0x4ff2ff], [2.5, 0xc8ff5a]]) { const s = new T.Mesh(new T.PlaneGeometry(20, 0.05), M({ color: c, emissive: c, emissiveIntensity: 1.2 })); s.position.set(0, y, 3.59); s.rotation.y = Math.PI; scene.add(s); }
+  // bar counter, shelves and bottles behind the fly; hanging lamps over the table
+  const counter = new T.Mesh(new T.BoxGeometry(7.5, 1.05, 0.9), M({ color: 0x1a1030, roughness: 0.5, metalness: 0.2 })); counter.position.set(0, 0.52, 3.0); counter.castShadow = true; scene.add(counter);
+  const counterTop = new T.Mesh(new T.BoxGeometry(7.6, 0.06, 1.0), M({ color: 0x4ff2ff, emissive: 0x4ff2ff, emissiveIntensity: 0.5 })); counterTop.position.set(0, 1.07, 3.0); scene.add(counterTop);
+  for (const y of [1.9, 2.55]) { const shelf = new T.Mesh(new T.BoxGeometry(6.4, 0.05, 0.35), M({ color: 0x2a1a4a })); shelf.position.set(0, y, 3.42); scene.add(shelf);
+    const glowStrip = new T.Mesh(new T.PlaneGeometry(6.4, 0.03), M({ color: 0xff4fd8, emissive: 0xff4fd8, emissiveIntensity: 1.5 })); glowStrip.position.set(0, y - 0.03, 3.24); scene.add(glowStrip); }
+  const bottleColors = [0x22c55e, 0xf59e0b, 0xe11d48, 0x4ff2ff, 0xa855f7, 0xfde68a, 0x38bdf8, 0xff7a95, 0xc8ff5a, 0xf97316];
+  for (let i = 0; i < 20; i++) { const y = i < 10 ? 1.93 : 2.58, x = -2.9 + (i % 10) * 0.64 + (i >= 10 ? 0.3 : 0); const col = bottleColors[(i * 7) % bottleColors.length];
+    const b = new T.Mesh(new T.CylinderGeometry(0.07, 0.09, 0.42, 10), M({ color: col, transparent: true, opacity: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: 0.25 })); b.position.set(x, y + 0.21, 3.42); scene.add(b);
+    const neck = new T.Mesh(new T.CylinderGeometry(0.025, 0.04, 0.16, 8), M({ color: col, transparent: true, opacity: 0.8 })); neck.position.set(x, y + 0.5, 3.42); scene.add(neck); }
+  const signCanvas = document.createElement("canvas"); signCanvas.width = 512; signCanvas.height = 128; { const cx = signCanvas.getContext("2d"); cx.font = "900 92px Inter, system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "#ff4fd8"; cx.shadowBlur = 30; cx.fillStyle = "#ff4fd8"; cx.fillText("FLY", 170, 64); cx.shadowColor = "#c8ff5a"; cx.fillStyle = "#c8ff5a"; cx.fillText("PONG", 380, 64); }
+  const signTex = new T.CanvasTexture(signCanvas); signTex.colorSpace = T.SRGBColorSpace;
+  const sign = new T.Mesh(new T.PlaneGeometry(3.2, 0.8), new T.MeshBasicMaterial({ map: signTex, transparent: true })); sign.position.set(0, 3.25, 3.55); sign.rotation.y = Math.PI; scene.add(sign);
+  for (const x of [-1.6, 0, 1.6]) { const cord = new T.Mesh(new T.CylinderGeometry(0.008, 0.008, 1.2, 4), M({ color: 0x555577 })); cord.position.set(x, 4.4, -0.6); scene.add(cord);
+    const shade = new T.Mesh(new T.ConeGeometry(0.28, 0.22, 16, 1, true), M({ color: 0x1f1538, side: T.DoubleSide })); shade.position.set(x, 3.75, -0.6); scene.add(shade);
+    const bulb = new T.Mesh(new T.SphereGeometry(0.06, 10, 8), M({ color: 0xfff1c0, emissive: 0xffd27a, emissiveIntensity: 2 })); bulb.position.set(x, 3.68, -0.6); scene.add(bulb);
+    const pl = new T.PointLight(0xffd27a, 0.7, 4); pl.position.set(x, 3.6, -0.6); scene.add(pl); }
   // disco lights
   const discoLights = [];
   for (const [c, off] of [[0xff4fd8, 0], [0x4ff2ff, 2.1], [0xc8ff5a, 4.2]]) {
@@ -42,13 +58,14 @@
     const beer = new T.Mesh(new T.CircleGeometry(0.145, 18), M({ color: 0xffb84f, emissive: 0xffb84f, emissiveIntensity: 0.35 })); beer.rotation.x = -Math.PI / 2; beer.position.y = 0.335; g.add(beer);
     scene.add(g); return g;
   }
-  const beer = new T.Group(); beer.position.set(0.95, 0.9, 1.35); scene.add(beer);
+  const beer = new T.Group(); beer.position.set(0.98, 0.9, -0.2); scene.add(beer);
   { const b = new T.Mesh(new T.CylinderGeometry(0.2, 0.15, 0.42, 18), M({ color: 0xffb84f, transparent: true, opacity: 0.85, roughness: 0.3 })); b.position.y = 0.21; b.castShadow = true; beer.add(b);
     const foam = new T.Mesh(new T.CylinderGeometry(0.21, 0.21, 0.06, 18), M({ color: 0xfff7e0 })); foam.position.y = 0.45; beer.add(foam); }
   const ball = new T.Mesh(new T.SphereGeometry(0.06, 16, 12), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4 })); ball.castShadow = true; ball.visible = false; scene.add(ball);
   const flyRig = L.buildFly(scene);
   const fly = flyRig.group;
-  fly.scale.setScalar(0.95 * 0.85);
+  fly.scale.setScalar(0.95 * 0.85 * 0.9);
+  const FLY_Z = 1.15; // near the fly's end of the table
 
   // -------------------------------------------------- CNS + meter
   const { CNS, loadAtlas, animateCNS } = L;
@@ -70,8 +87,8 @@
   function say(t, ms) { const b = $("#bubble"); b.textContent = t; b.style.display = "block"; clearTimeout(say.timer); say.timer = setTimeout(() => (b.style.display = "none"), ms / S.speed); }
   function banner(t, color, ms) { const b = $("#banner"); b.textContent = t; b.style.color = color; b.classList.add("on"); clearTimeout(banner.timer); banner.timer = setTimeout(() => b.classList.remove("on"), ms / S.speed); }
   function flash(ms) { const f = $("#flash"); f.classList.add("on"); setTimeout(() => f.classList.remove("on"), ms); }
-  function feed(text, cls) { const li = document.createElement("li"); li.textContent = text; li.className = cls || ""; const ul = $("#feed"); ul.prepend(li); while (ul.children.length > 8) ul.lastChild.remove(); }
-  function state(t) { $("#state").textContent = t; }
+  function feed(text, cls) { const ul = $("#feed"); if (!ul) return; const li = document.createElement("li"); li.textContent = text; li.className = cls || ""; ul.prepend(li); while (ul.children.length > 8) ul.lastChild.remove(); }
+  let state = (t) => { const el = $("#state"); if (el) el.textContent = t; };
   async function parseNpy(url) { const buf = await (await fetch(url)).arrayBuffer(); const v = new DataView(buf); const major = v.getUint8(6); const hl = major === 1 ? v.getUint16(8, true) : v.getUint32(8, true); return new Int32Array(buf.slice((major === 1 ? 10 : 12) + hl)); }
   const loadImage = (url) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url; });
   function score(throwNo) {
@@ -86,8 +103,8 @@
     const hz = a ? parseFloat(a.reward_hz) : 0;
     $("#dopa-hz").innerHTML = a ? `${hz.toFixed(1)} <small>Hz</small>` : "— <small>Hz</small>";
     $("#dopa-note").textContent = a ? (a.reward_applied_ms ? `${S.run.reward_cells} PAM11 neurons · reward current on for ${a.reward_applied_ms} ms after the hit · ${a.reward_spikes} spikes` : `${S.run.reward_cells} PAM11 neurons · no reward current this throw · ${a.reward_spikes} spikes`) : "15 PAM11 neurons · reward current after a hit";
-    $(".card.dopa").classList.toggle("hot", !!(a && a.reward_applied_ms));
-    $("#dopa-ring").style.transform = `rotate(${Math.min(360, hz * 6)}deg)`;
+    const dop = $(".dopa"); if (dop) dop.classList.toggle("hot", !!(a && a.reward_applied_ms));
+    const ring = $("#dopa-ring"); if (ring) ring.style.transform = `rotate(${Math.min(360, hz * 6)}deg)`;
   }
   function setCups(list) { const want = new Set(list.map(cupKey)); for (const [k, g] of cups) if (!want.has(k)) { scene.remove(g); cups.delete(k); } for (const c of list) if (!cups.has(cupKey(c))) cups.set(cupKey(c), makeCup(c)); S.cups = list.length; }
   function spawnConfetti(n) { for (let k = 0; k < n; k++) { const m = new T.Mesh(new T.BoxGeometry(0.04, 0.06, 0.01), new T.MeshBasicMaterial({ color: [0xc8ff5a, 0x4ff2ff, 0xff4fd8, 0xffb84f][k % 4] })); m.position.set((Math.random() - 0.5) * 5, 3.5 + Math.random() * 1.5, (Math.random() - 0.5) * 4 - 0.5); m.userData = { v: 0.01 + Math.random() * 0.02, r: Math.random() * 0.2 }; scene.add(m); S.confetti.push(m); } }
@@ -112,7 +129,7 @@
     await sleep(500);
     if (g !== S.gen) return;
     const lx = parseFloat(a.landing_x) * 0.8, tz = a.hit ? cupPos(a.cup)[1] : -2.65;
-    S.ball = { t0: now(), dur: 1100 / S.speed, from: [fly.position.x + 0.35, 1.55, 0.45], to: [lx, a.hit ? 1.25 : 0.96, tz], hit: a.hit };
+    S.ball = { t0: now(), dur: 1100 / S.speed, from: [fly.position.x, 1.5, FLY_Z - 0.3], to: [lx, a.hit ? 1.25 : 0.96, tz], hit: a.hit };
     ball.visible = true; S.fly.mode = "press"; say(a.gate_spikes ? "THROW!" : "…gate silent", 800);
     await sleep(1150); ball.visible = false; S.fly.mode = "idle";
     if (g !== S.gen) return;
@@ -127,7 +144,7 @@
       banner(a.gate_spikes ? `💨 miss · landed at ${parseFloat(a.landing_x).toFixed(2)}` : "💨 miss · no gate spike, no throw", "#ffb84f", 1400);
       feed(`🍺 throw ${a.throw}: miss → drink #${a.drinks_after}`, "miss");
       say("ugh. drink.", 1000);
-      S.fly.target = 0.62; S.fly.mode = "walk"; await sleep(900);
+      S.fly.target = 0.7; S.fly.mode = "walk"; await sleep(900);
       if (g !== S.gen) return;
       S.fly.mode = "drink"; say("*glug glug*", 1300); await sleep(1300);
       if (g !== S.gen) return;
@@ -194,7 +211,7 @@
     // pass-out: legs splay, body sinks face-down onto the table (no rolling)
     S.collapse += ((f.mode === "passout" ? 1 : 0) - S.collapse) * Math.min(1, dt / 450);
     const c = S.collapse;
-    fly.position.set(f.x, 1.27 + lift - 0.2 * c, 0.45); fly.rotation.y = f.yaw; fly.rotation.z = 0;
+    fly.position.set(f.x, 1.25 + lift - 0.18 * c, FLY_Z); fly.rotation.y = f.yaw; fly.rotation.z = 0;
     flyRig.animate(t, moving, f.mode, f.drunk * (1 - c), c);
     fly.rotation.x += pitch * (1 - c) + 0.22 * c;
     if (S.ball) { const b = S.ball, u = Math.min(1, (now() - b.t0) / b.dur); ball.position.set(b.from[0] + (b.to[0] - b.from[0]) * u, b.from[1] + (b.to[1] - b.from[1]) * u + Math.sin(u * Math.PI) * 1.1, b.from[2] + (b.to[2] - b.from[2]) * u); ball.rotation.x += 0.2; if (u >= 1) S.ball = null; }
@@ -206,7 +223,7 @@
     discoLights.forEach(({ l, off }, i) => { const a = t / (hot ? 700 : 2200) + off; l.target.position.set(Math.cos(a) * 2.2, 0.9, Math.sin(a) * 1.8 - 0.5); l.intensity = (hot ? 2.6 : 1.4) + Math.sin(t / 300 + i) * 0.3; });
     ballMirror.rotation.y = t / 4000;
     animateCNS(t, dt);
-    headPos.set(f.x, 1.27 + lift + 0.42, 0.45).project(camera);
+    headPos.set(f.x, 1.25 + lift + 0.38, FLY_Z).project(camera);
     const bb = $("#bubble"); bb.style.left = ((headPos.x + 1) / 2 * 100) + "%"; bb.style.top = ((1 - headPos.y) / 2 * 100) + "%";
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
@@ -230,6 +247,7 @@
     $("#step").onclick = async () => { if (running || S.i >= S.events.length) return; S.playing = false; $("#play").textContent = "▶ play"; running = true; await runEvent(S.events[S.i]); S.i++; running = false; };
     $("#end").onclick = skipToEnd;
     document.querySelectorAll("[data-speed]").forEach((b) => (b.onclick = () => { S.speed = parseFloat(b.dataset.speed); document.querySelectorAll("[data-speed]").forEach((x) => x.classList.toggle("on", x === b)); }));
+    const stateEl = $("#state"); if (stateEl && stateEl.hidden) state = () => {};
     requestAnimationFrame(loop);
     S.playing = true; $("#play").textContent = "⏸ pause"; play();
   }

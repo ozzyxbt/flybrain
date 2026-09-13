@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="noise"></div></div>
-<header class="top">
+<header class="top compact">
   <div class="brand"><span class="logo">FLY<b>PONG</b></span><span class="sub">a fruit-fly connectome vs six cups</span></div>
   <div class="chips">
     <span class="chip" id="chip-mode">REPLAY</span>
@@ -16,71 +16,44 @@
     <span class="chip ok" id="chip-chain">chain …</span>
   </div>
 </header>
-<main class="party">
-  <section class="left">
-    <div class="stage-card">
-      <div id="stage3d">
-        <div class="score">
-          <div class="stat"><span class="k">THROW</span><span class="v" id="s-throw">—</span></div>
-          <div class="stat"><span class="k">CUPS</span><span class="v lime" id="s-cups">6</span></div>
-          <div class="stat"><span class="k">HITS</span><span class="v pink" id="s-hits">0</span></div>
-          <div class="stat"><span class="k">DRINKS</span><span class="v amber" id="s-drinks">0</span><span class="beers" id="s-beers"></span></div>
+<main class="party one">
+  <div class="stage-card">
+    <div id="stage3d">
+      <div class="score">
+        <div class="stat"><span class="k">THROW</span><span class="v" id="s-throw">—</span></div>
+        <div class="stat"><span class="k">CUPS</span><span class="v lime" id="s-cups">6</span></div>
+        <div class="stat"><span class="k">HITS</span><span class="v pink" id="s-hits">0</span></div>
+        <div class="stat"><span class="k">DRINKS</span><span class="v amber" id="s-drinks">0</span><span class="beers" id="s-beers"></span></div>
+      </div>
+      <div class="ov brainbox">
+        <div class="cns-head"><span class="k">CNS · RECORDED ACTIVITY</span><span class="k" id="cns-rates">L — · R — · gate —</span></div>
+        <div class="cns-view"><canvas id="cns-dorsal"></canvas><div class="cap">Brain · frontal</div></div>
+        <div class="cns-view"><canvas id="cns-frontal"></canvas><div class="cap">CNS · dorsal</div></div>
+        <div class="meterrow">
+          <div><div class="k">ACTIVE NEURONS</div><div class="big small" id="m-firing">— <small id="m-pct"></small></div><div class="track"><div class="fill lime" id="m-bar"></div></div><div class="meta" id="m-note"></div></div>
+          <div class="dopa"><div class="k">DOPAMINE · PAM11</div><div class="big small pink" id="dopa-hz">— <small>Hz</small></div><div class="meta" id="dopa-note">reward current after a hit</div></div>
         </div>
-        <div class="state" id="state">warming up…</div>
-        <div class="bubble" id="bubble"></div>
-        <div class="flash" id="flash"></div>
-        <div class="banner" id="banner"></div>
+        <div class="meta" id="brain-title" hidden></div><div class="meta" id="brain-note" hidden></div><div class="meta" id="brain-stats" hidden></div>
       </div>
-      <div class="controls">
-        <button class="pill primary" id="play">▶ play</button>
-        <button class="pill" id="step">⏭ next throw</button>
-        <button class="pill" id="end">⏩ ending</button>
-        <div class="speed"><span>speed</span><button class="pill sm" data-speed="0.5">½×</button><button class="pill sm on" data-speed="1">1×</button><button class="pill sm" data-speed="2">2×</button><button class="pill sm" data-speed="4">4×</button></div>
-        <span class="progress" id="progress"></span>
-      </div>
-    </div>
-    <div class="under">
-      <div class="card cam">
-        <div class="k">FLY CAM · what the network saw this throw</div>
+      <div class="ov cambox">
+        <div class="k">FLY CAM · what the network saw</div>
         <canvas id="flycam" width="320" height="180"></canvas>
-        <div class="meta" id="cam-note">3,335 R1–R6 + 811 R8 inputs read this frame. Drinks blur and double it.</div>
-      </div>
-      <div class="card">
-        <div class="k">READOUT · DNp20 left / right</div>
-        <div class="bars">
+        <div class="bars mini">
           <div class="bar"><span>L</span><div class="track"><div class="fill l" id="bar-l"></div></div><em id="hz-l">—</em></div>
           <div class="bar"><span>R</span><div class="track"><div class="fill r" id="bar-r"></div></div><em id="hz-r">—</em></div>
         </div>
         <div class="meta" id="readout-note">gate — · aim —</div>
-        <div class="k" style="margin-top:14px">FEED</div>
-        <ul id="feed" class="feedlist"></ul>
       </div>
+      <div class="ov onebtn"><button class="pill primary" id="play">▶ play</button><span class="progress" id="progress"></span></div>
+      <div class="state" id="state" hidden></div>
+      <div class="bubble" id="bubble"></div>
+      <div class="flash" id="flash"></div>
+      <div class="banner" id="banner"></div>
+      <div class="ov foot" id="disclosure">…</div>
     </div>
-  </section>
-  <aside class="side">
-    <div class="card cns">
-      <div class="cns-head"><span class="k">CNS · RECORDED MODEL ACTIVITY</span><span class="k" id="cns-rates">DNp20 L — · R — · gate —</span></div>
-      <div class="cns-view"><canvas id="cns-dorsal"></canvas><div class="cap">Brain · frontal</div></div>
-      <div class="cns-view"><canvas id="cns-frontal"></canvas><div class="cap">CNS · dorsal · brain top, nerve cord below</div></div>
-      <div class="meta" id="brain-title">loading atlas…</div>
-      <div class="meta" id="brain-note" hidden></div>
-      <div class="meta" id="brain-stats" hidden></div>
-    </div>
-    <div class="card meter">
-      <div class="k">ACTIVE NEURONS · this throw</div>
-      <div class="big" id="m-firing">— <small id="m-pct"></small></div>
-      <div class="track tall"><div class="fill lime" id="m-bar"></div></div>
-      <div class="meta" id="m-note">cells with ≥ 1 spike in the 500 ms window · max — spikes · — total</div>
-    </div>
-    <div class="card dopa">
-      <div class="k">DOPAMINE · PAM11</div>
-      <div class="big" id="dopa-hz">— <small>Hz</small></div>
-      <div class="ring" id="dopa-ring"></div>
-      <div class="meta" id="dopa-note">15 PAM11 neurons · reward current after a hit</div>
-    </div>
-  </aside>
+  </div>
+  <ul id="feed" hidden></ul><button id="step" hidden></button><button id="end" hidden></button>
 </main>
-<footer class="disclosure" id="disclosure">…</footer>
 <script src="/static/vendor/three.min.js"></script>
 <script src="/static/flylib.js"></script>
 <script src="/static/party/party.js"></script>

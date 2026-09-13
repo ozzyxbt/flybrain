@@ -20,7 +20,7 @@
     scene.fog = new T.Fog(opts.background ?? 0x05070c, 7, 14);
     const camera = new T.PerspectiveCamera(opts.fov || 38, 16 / 9, 0.1, 50);
     function resize() {
-      const w = stage.clientWidth, h = Math.round(w * 9 / 16);
+      const w = stage.clientWidth, h = opts.fill ? stage.clientHeight : Math.round(w * 9 / 16);
       renderer.setSize(w, h, false);
       camera.aspect = w / h; camera.updateProjectionMatrix();
     }
