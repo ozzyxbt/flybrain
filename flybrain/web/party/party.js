@@ -76,14 +76,14 @@
     const g = new T.Group(); const [x, z] = cupPos(c); g.position.set(x, 0.9, z);
     const body = new T.Mesh(cupGeo, cupMat); body.position.y = 0.17; body.castShadow = true; g.add(body);
     const rim = new T.Mesh(new T.TorusGeometry(0.16, 0.015, 8, 24), rimMat); rim.rotation.x = Math.PI / 2; rim.position.y = 0.34; g.add(rim);
-    const beer = new T.Mesh(new T.CircleGeometry(0.145, 18), M({ color: 0xffb84f, emissive: 0xffb84f, emissiveIntensity: 0.35 })); beer.rotation.x = -Math.PI / 2; beer.position.y = 0.335; g.add(beer);
+    const beer = new T.Mesh(new T.CircleGeometry(0.145, 18), M({ color: 0xffd21a, emissive: 0xffc107, emissiveIntensity: 0.5 })); beer.rotation.x = -Math.PI / 2; beer.position.y = 0.335; g.add(beer);
     scene.add(g); return g;
   }
   const BEER = [0.98, -0.2];
   const beer = new T.Group(); beer.position.set(BEER[0], 0.9, BEER[1]); scene.add(beer);
-  const beerLiquid = new T.Mesh(new T.CylinderGeometry(0.2, 0.15, 0.42, 18), M({ color: 0xffb84f, transparent: true, opacity: 0.85, roughness: 0.3 })); beerLiquid.position.y = 0.21; beerLiquid.castShadow = true; beer.add(beerLiquid);
+  const beerLiquid = new T.Mesh(new T.CylinderGeometry(0.2, 0.15, 0.42, 18), M({ color: 0xffd21a, emissive: 0xffb300, emissiveIntensity: 0.35, transparent: true, opacity: 0.92, roughness: 0.25 })); beerLiquid.position.y = 0.21; beerLiquid.castShadow = true; beer.add(beerLiquid);
   const beerGlass = new T.Mesh(new T.CylinderGeometry(0.21, 0.16, 0.46, 18, 1, true), new T.MeshPhysicalMaterial({ color: 0xdfe9ff, transparent: true, opacity: 0.25, roughness: 0.05, side: T.DoubleSide })); beerGlass.position.y = 0.23; beer.add(beerGlass);
-  const foam = new T.Mesh(new T.CylinderGeometry(0.21, 0.21, 0.06, 18), M({ color: 0xfff7e0 })); foam.position.y = 0.45; beer.add(foam);
+  const foam = new T.Mesh(new T.CylinderGeometry(0.21, 0.21, 0.07, 18), M({ color: 0xfffbea, roughness: 0.9 })); foam.position.y = 0.45; beer.add(foam);
   const ball = new T.Mesh(new T.SphereGeometry(0.06, 16, 12), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4 })); ball.castShadow = true; ball.visible = false; scene.add(ball);
   const flyRig = L.buildFly(scene);
   const fly = flyRig.group;
