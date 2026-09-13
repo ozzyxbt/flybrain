@@ -1,0 +1,13 @@
+{
+  "protocol": "fly-pong-v1",
+  "run_id": "pong-fixture",
+  "throws": 6,
+  "hits": 0,
+  "misses": 6,
+  "drinks": 6,
+  "cups_left": 6,
+  "result": "PASSED OUT",
+  "backend": "fixture-brain-v1",
+  "chain_head": "50fa2351e05956efe3edd01dcc9acfa23535589ff018d25c7f820e239aef5d61",
+  "chain_length": 9
+}

@@ -112,7 +112,7 @@ def _verify(root: Path, r: Report, resimulate: bool):
             r.expect(ppath.exists() and sha256_hex(ppath.read_bytes()) == atlas["positions_sha256"] and ppath.stat().st_size == atlas["n"] * 12, "atlas.positions_hash_and_size")
             r.expect(atlas["schematic"] == (run["backend"] == FIXTURE_MODEL) == atlas_info["schematic"], "atlas.schematic_flag_matches_backend")
             if cells is not None:
-                r.expect(atlas["cells"] == {k: list(map(int, v)) for k, v in cells.items()}, "atlas.readout_cells_match_decoder")
+                r.expect({k: atlas["cells"].get(k) for k in ("left", "right", "gate")} == {k: list(map(int, v)) for k, v in cells.items()}, "atlas.readout_cells_match_decoder")
 
     # 4. Trials
     trials = {}
@@ -337,7 +337,7 @@ def _connectome_cells(root, run, r):
     if not path.exists() or file_sha256(path) != info["sha256"]:
         return None  # already reported by the atlas check
     atlas = json.loads(path.read_text())
-    cells = {k: np.asarray(v, dtype=np.int64) for k, v in atlas["cells"].items()}
+    cells = {k: np.asarray(atlas["cells"][k], dtype=np.int64) for k in ("left", "right", "gate")}
     ok = all(len(cells[k]) == len(run["decoder_cells"][k]) for k in ["left", "right", "gate"])
     r.expect(ok, "decoder.atlas_cell_counts_match_ids", {k: len(v) for k, v in cells.items()})
     return cells if ok else None
