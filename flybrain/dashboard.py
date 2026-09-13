@@ -88,7 +88,7 @@ def make_handler(run_dir: Path, pages=None):
             path = self.path.split("?", 1)[0]
             if path in pages:
                 return self._send(200, (WEB / pages[path]).read_bytes(), "text/html; charset=utf-8")
-            if path == "/api/index":
+            if path in ("/api/index", "/api/index.json"):
                 return self._send(200, json.dumps(index(run_dir)).encode(), "application/json")
             if path == "/api/verify":
                 from .verifier.verify import verify_run
@@ -126,3 +126,36 @@ def serve(run_dir, host="127.0.0.1", port=8787, block=True, app="lab"):
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server
+
+
+def export_party(run_dir, out_dir, cname=None):
+    """Write a server-less copy of the FLYPONG app for static hosting.
+
+    The page reads ``api/index.json`` (the same chain walk the server serves)
+    and the run's frames, spike arrays and atlas under ``run/``.
+    """
+    import shutil
+
+    run_dir, out = Path(run_dir).resolve(), Path(out_dir)
+    if out.exists():
+        shutil.rmtree(out)
+    (out / "api").mkdir(parents=True)
+    shutil.copytree(WEB / "party", out, dirs_exist_ok=True)
+    (out / "static" / "party").mkdir(parents=True)
+    for name in ["party.css", "party.js"]:
+        shutil.copyfile(WEB / "party" / name, out / "static" / "party" / name)
+    shutil.copyfile(WEB / "flylib.js", out / "static" / "flylib.js")
+    shutil.copytree(WEB / "vendor", out / "static" / "vendor")
+    for name in ["party.css", "party.js"]:
+        (out / name).unlink()
+    for sub in ["frames", "spikes", "brain", "throws"]:
+        if (run_dir / sub).exists():
+            shutil.copytree(run_dir / sub, out / "run" / sub)
+    for name in ["chain.jsonl", "run.json", "result.json", "summary.json", "commitments.jsonl"]:
+        if (run_dir / name).exists():
+            shutil.copyfile(run_dir / name, out / "run" / name)
+    (out / "api" / "index.json").write_text(json.dumps(index(run_dir)))
+    (out / ".nojekyll").write_text("")
+    if cname:
+        (out / "CNAME").write_text(cname + "\n")
+    return out

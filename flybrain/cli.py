@@ -32,6 +32,11 @@ def main(argv=None):
     party.add_argument("--port", type=int, default=8790)
     party.add_argument("--host", default="127.0.0.1")
 
+    ex = sub.add_parser("export-party", help="Export the FLYPONG app + a game record as a static site (no server needed)")
+    ex.add_argument("--run", type=Path, required=True)
+    ex.add_argument("--out", type=Path, default=Path("site"))
+    ex.add_argument("--cname", help="Custom domain for GitHub Pages (writes CNAME)")
+
     render = sub.add_parser("render", help="Render one choice frame to PNG")
     render.add_argument("--manifest", type=Path, default=Path("manifests/genesis-v1.json"))
     render.add_argument("--category", required=True)
@@ -96,6 +101,12 @@ def main(argv=None):
         from .dashboard import serve as serve_fn
 
         serve_fn(a.run, a.host, a.port)
+        return 0
+    if a.command == "export-party":
+        from .dashboard import export_party
+
+        out = export_party(a.run, a.out, a.cname)
+        print(json.dumps({"exported": str(out), "files": sum(1 for p in out.rglob("*") if p.is_file())}))
         return 0
     if a.command == "party":
         from .dashboard import serve as serve_fn

@@ -31,6 +31,16 @@ flybrain party --run runs/pong-1                        # http://127.0.0.1:8790/
 
 The fly throws where its DNp20 readout says (zeroed on an empty-table calibration), sinks cups, drinks on misses (each drink blurs and doubles the image the network sees), and receives the Stonkfly PAM11 reward pulse after a hit. Replayed in its own party-themed front end (3D table, disco lights, rotating brain hologram, dopamine meter), separate from the lab dashboard. Hash-chained; rules and the real/engineered/theatre split in [docs/beer-pong.md](docs/beer-pong.md). The committed fixture game is in `fixtures/games/pong-fixture`; a connectome game (3 hits / 9 throws, passed out) is attached to the release.
 
+### flypong.xyz
+
+The FLYPONG app is exported as a server-less static site (`site/`, deployed to GitHub Pages by `.github/workflows/pages.yml`, custom domain `flypong.xyz`):
+
+```sh
+flybrain export-party --run runs/pong-connectome --out site --cname flypong.xyz
+```
+
+The export bundles the page, three.js, the game's frames, spike arrays, atlas and chain, and a pre-built `api/index.json`; nothing runs on a server.
+
 ## Venues
 
 Pump.fun: adapter gated until the official program/API review. pons: identified as an EVM launch protocol on Robinhood Chain (chain id 4663); `flybrain/launch/pons.py` builds and inspects the unsigned v2 `launchToken` call and never submits (`flybrain pons-preview`). Details and consequences in [docs/pons.md](docs/pons.md). Venue selection stays in simulation mode.

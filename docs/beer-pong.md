@@ -8,6 +8,8 @@ flybrain pong --backend malecns-connectome --checkpoint data/checkpoints/genesis
 flybrain party --run runs/pong-1       # http://127.0.0.1:8790/  (FLYPONG party app, separate front end)
 ```
 
+`flybrain export-party --run <game> --out site --cname flypong.xyz` writes the same app as a static site (GitHub Pages / any static host); this is what https://flypong.xyz serves.
+
 ## Rules (`flybrain/games/beerpong.py`)
 
 | Rule | Value |

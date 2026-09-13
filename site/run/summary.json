@@ -1,0 +1,13 @@
+{
+  "protocol": "fly-pong-v1",
+  "run_id": "pong-connectome",
+  "throws": 9,
+  "hits": 3,
+  "misses": 6,
+  "drinks": 6,
+  "cups_left": 3,
+  "result": "PASSED OUT",
+  "backend": "malecns-connectome",
+  "chain_head": "d384886b08dc960d6e06a5d3d49506d182e157b1b78986817e50ca11af80c071",
+  "chain_length": 12
+}
