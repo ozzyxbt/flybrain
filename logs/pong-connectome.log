@@ -1,0 +1,20 @@
+throw 01: L=28.000000 R=40.000000 gate=22 land=1.000000 -> miss · drinks 1 · PAM11 0 spikes · plastic edges changed 3
+throw 02: L=40.000000 R=46.000000 gate=13 land=1.000000 -> miss · drinks 2 · PAM11 0 spikes · plastic edges changed 3
+throw 03: L=32.000000 R=50.000000 gate=13 land=1.000000 -> miss · drinks 3 · PAM11 0 spikes · plastic edges changed 531
+throw 04: L=36.000000 R=44.000000 gate=0 land=1.000000 -> miss · drinks 4 · PAM11 1 spikes · plastic edges changed 3028
+throw 05: L=32.000000 R=42.000000 gate=1 land=1.000000 -> miss · drinks 5 · PAM11 0 spikes · plastic edges changed 3273
+throw 06: L=34.000000 R=46.000000 gate=3 land=1.000000 -> miss · drinks 6 · PAM11 0 spikes · plastic edges changed 3305
+result: PASSED OUT · 0 hits / 6 throws · 6 drinks
+{
+  "protocol": "fly-pong-v1",
+  "run_id": "pong-connectome",
+  "throws": 6,
+  "hits": 0,
+  "misses": 6,
+  "drinks": 6,
+  "cups_left": 6,
+  "result": "PASSED OUT",
+  "backend": "malecns-connectome",
+  "chain_head": "7ed3a499938fc2e76d116ed2a42050d3dfc9ea81a171632a5c327459d447f9ff",
+  "chain_length": 8
+}

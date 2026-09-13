@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLYBRAIN · pong</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  main.scene { max-width: 1320px; gap: 12px; }
+  .live-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; align-items: start; }
+  .stage { position: relative; background: #05070c; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  #stage3d { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #05070c; }
+  #stage3d canvas { display: block; width: 100% !important; height: 100% !important; }
+  .stage.cns { display: grid; grid-template-rows: auto 1fr 1fr auto; background: #000; }
+  .cns-head { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .cns-view { position: relative; }
+  .cns-view canvas { display: block; width: 100%; aspect-ratio: 2 / 1; background: #000; }
+  .cns-view .cap { position: absolute; left: 10px; bottom: 6px; font-size: 10px; color: var(--muted); }
+  .dopa { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line); background: #070a12; }
+  .dopa .big { font-size: 28px; margin: 0; }
+  .dopa .big.pink { color: #e879f9; }
+  .dopa .meta { font-size: 10px; }
+  .hud { position: absolute; pointer-events: none; font-size: 11px; }
+  #bubble { transform: translate(-50%, -100%); background: #f8fafc; color: #0b0e14; padding: 4px 10px; border-radius: 6px; font-weight: 700; white-space: nowrap; display: none; }
+  #bubble:after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-top-color: #f8fafc; border-bottom: 0; }
+  #banner { left: 0; right: 0; bottom: 0; padding: 7px 12px; text-align: center; font-size: 13px; font-weight: 700; background: rgba(5,7,12,0.85); border-top: 2px solid var(--acid); display: none; }
+  #stage3d canvas#flycam { position: absolute; right: 10px; top: 10px; width: 160px !important; height: 90px !important; border: 1px solid var(--line); border-radius: 4px; background: #000; image-rendering: pixelated; opacity: 0.95; }
+  #flycam-cap { position: absolute; right: 12px; top: 104px; font-size: 9px; color: var(--muted); letter-spacing: 0.1em; }
+  #score { left: 10px; top: 10px; font-size: 12px; background: rgba(11,17,32,0.8); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+  #score b { color: var(--acid); }
+  #score .drunk { color: var(--amber); }
+  .tape { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; border-top: 1px solid var(--line); padding: 6px 12px; background: #070a12; }
+  .tape span { color: var(--cyan); }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .controls .spacer { flex: 1; }
+  .replay { font-size: 11px; letter-spacing: 0.14em; color: var(--amber); border: 1px solid var(--amber); padding: 2px 8px; border-radius: 4px; }
+  .tagline { font-size: 22px; font-weight: 800; letter-spacing: 0.06em; margin: 0; }
+  .tagline small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+  @media (max-width: 900px) { .live-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-page="live">
+<header>
+  <div class="wordmark">FLYBRAIN<span>born to fly. forced to drink.</span></div>
+  <nav><a href="/">/live</a><a class="active" href="/pong">/pong</a><a href="/choose">/choose</a><a href="/coin">/coin</a><a href="/brain">/brain</a></nav>
+  <div class="spacer"></div>
+  <span class="badge" id="backend"></span>
+  <span class="badge" id="run-id"></span>
+  <span class="badge" id="verify">chain…</span>
+</header>
+<main class="scene">
+  <p class="tagline">166,700 NEURONS. SIX CUPS. ONE BALL.<small id="disclosure"></small></p>
+  <div class="live-grid">
+    <div class="stage">
+      <div id="stage3d">
+        <div class="hud" id="score">throw — · cups <b>6</b> · <span class="drunk">drinks 0</span></div>
+        <canvas id="flycam" width="320" height="180"></canvas><div id="flycam-cap">FLY CAM · what the network saw</div>
+        <div class="hud" id="bubble"></div>
+        <div class="hud" id="banner"></div>
+      </div>
+      <div class="tape" id="tape">loading the chain…</div>
+    </div>
+    <div class="stage cns">
+      <div class="cns-head"><span>CNS / RECORDED MODEL ACTIVITY</span><span id="cns-rates">DNp20 L — · R — · gate —</span></div>
+      <div class="cns-view"><canvas id="cns-dorsal"></canvas><div class="cap">Brain (frontal)</div></div>
+      <div class="cns-view"><canvas id="cns-frontal"></canvas><div class="cap">CNS (dorsal) · brain top, nerve cord below</div></div>
+      <div class="dopa">
+        <div><div class="meta">DOPAMINE ACTIVITY · PAM11</div><p class="big pink" id="dopa-hz">— Hz</p><div class="meta" id="dopa-note">15 PAM11 neurons · artificial reward current after a hit</div></div>
+        <div><div class="meta">FLY SPIKES</div><p class="big" id="spikes-total">—</p><div class="meta" id="spikes-note">in 500 ms of neural time</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="controls">
+    <span class="replay" id="mode">REPLAY OF HASH-CHAINED GAME</span>
+    <button id="play">▶ play</button>
+    <button id="step">⏭ step</button>
+    <button id="end">⏩ skip to end</button>
+    <label>speed <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+    <span class="spacer"></span>
+    <span class="meta" id="progress"></span>
+  </div>
+  <div class="panel">
+    <div class="meta" id="brain-title">CNS · loading atlas…</div>
+    <div class="meta" id="brain-note"></div>
+    <div class="meta" id="brain-stats"></div>
+    <div class="meta" style="margin-top:6px">How the game works: each throw is one 500 ms observation of the table by the network; the fixed DNp20 left/right readout sets where the ball lands (right − left, divided by a published scale). A hit sinks the cup and the next observation carries the Stonkfly reward pulse: a 20 mV-equivalent current into the 15 PAM11 dopamine cells for 200 ms, with the candidate plasticity rule enabled (measured PAM11 spikes are shown; this is engineered reinforcement, not pleasure). A miss makes the fly drink: each drink blurs and doubles the rendered image the network sees on later throws (see FLY CAM). No neural parameter is changed by drinking; the wobble is animation. Six drinks and the fly passes out.</div>
+  </div>
+</main>
+<footer>A game. Not evidence of skill, learning, intoxication or experience. Spike arrays, frames and results are hash-chained and replayable.</footer>
+<script src="/static/app.js"></script>
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/flylib.js"></script>
+<script src="/static/pong3d.js"></script>
+</body>
+</html>

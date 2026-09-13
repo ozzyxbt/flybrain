@@ -51,6 +51,14 @@ def main(argv=None):
     pp.add_argument("--logo-uri", help="Hosted logo URL for the token's logo() field")
     pp.add_argument("--out", type=Path)
 
+    pong = sub.add_parser("pong", help="Game mode: the fly plays beer pong (hash-chained record, not the choice protocol)")
+    pong.add_argument("--backend", choices=["fixture-brain-v1", "malecns-connectome"], default="fixture-brain-v1")
+    pong.add_argument("--checkpoint", type=Path, default=Path("manifests/fixture-checkpoint-v1.json"))
+    pong.add_argument("--out", type=Path, required=True)
+    pong.add_argument("--run-id")
+    pong.add_argument("--throws", type=int)
+    pong.add_argument("--quiet", action="store_true")
+
     sub.add_parser("prepare", help="Download and compile MaleCNS v1.0 (about 1.1 GB; connectome backend only)")
     sub.add_parser("verify-data", help="Verify the prepared connectome dataset")
     ck = sub.add_parser("checkpoint", help="Create the frozen genesis checkpoint for the connectome backend")
@@ -108,6 +116,12 @@ def main(argv=None):
             draft["brain_checkpoint_sha256"] = file_sha256(a.checkpoint)
         mm.validate(draft)
         print(write_canonical(a.out, draft))
+        return 0
+    if a.command == "pong":
+        from .games.beerpong import play
+
+        summary = play(a.backend, a.checkpoint, a.out, a.run_id, a.throws, log=(lambda *_: None) if a.quiet else print)
+        print(json.dumps(summary, indent=2))
         return 0
     if a.command == "pons-preview":
         from .commitments.canonical import load_canonical

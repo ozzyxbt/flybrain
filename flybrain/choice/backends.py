@@ -44,6 +44,7 @@ class FixtureBrain:
     RIGHT = np.arange(16, 32, dtype=np.int64)
     GATE = np.arange(32, 36, dtype=np.int64)
     OTHER = np.arange(36, 64, dtype=np.int64)
+    REWARD = np.arange(36, 51, dtype=np.int64)  # 15 "PAM11-like" stand-ins for game modes
 
     def __init__(self, checkpoint_path):
         self.checkpoint_path = Path(checkpoint_path)
@@ -95,9 +96,18 @@ class FixtureBrain:
             "schematic": True,
             "note": "Fixture backend: positions are a schematic layout, not anatomy. Spike counts shown on them are the recorded values.",
             "n": int(self.N),
-            "cells": {"left": self.LEFT.tolist(), "right": self.RIGHT.tolist(), "gate": self.GATE.tolist()},
+            "cells": {"left": self.LEFT.tolist(), "right": self.RIGHT.tolist(), "gate": self.GATE.tolist(), "reward": self.REWARD.tolist()},
             "positions": pos,
         }
+
+    def observe(self, frame: np.ndarray, window_ms: int, reward: bool = False, learning: bool = True, pulse_ms: int = 200) -> dict:
+        """Game-mode observation: same readout as evaluate(); a reward pulse adds
+        spikes to the 15 stand-in reward cells. The fixture has no memory."""
+        counts, neural_time = self.evaluate(frame, window_ms)
+        if reward:
+            counts = counts.copy()
+            counts[self.REWARD] += int(round(30 * pulse_ms / 1000))
+        return {"counts": counts, "neural_time_ms": neural_time, "reward_spikes": int(counts[self.REWARD].sum()), "kc_spikes": 0, "memory": {"changed_edges": 0, "plastic_edges": 0, "sha256": None}, "stimulus_ms": pulse_ms if reward else 0}
 
     def _jitter(self, input_sha: str) -> np.ndarray:
         seed = hashlib.sha256((self.checkpoint_sha256 + input_sha).encode()).digest()
@@ -218,8 +228,35 @@ class ConnectomeBrain:
             "schematic": False,
             "note": "MaleCNS v1.0 soma positions, normalised. Neurons without a released soma position are omitted from the view.",
             "n": int(n),
-            "cells": {k: np.asarray(v).tolist() for k, v in self.cells.items()},
+            "cells": {**{k: np.asarray(v).tolist() for k, v in self.cells.items()}, "reward": np.asarray(self.brain.circuit["reward"]).tolist()},
             "positions": pos,
+        }
+
+    def observe(self, frame: np.ndarray, window_ms: int, reward: bool = False, learning: bool = True, pulse_ms: int = 200, pulse_current: float = 20.0) -> dict:
+        """Game-mode observation: the brain keeps its state between calls (no
+        checkpoint restore), the candidate plasticity rule may run, and a hit
+        delivers the Stonkfly reward pulse (an artificial current into the 15
+        PAM11 dopamine cells for ``pulse_ms``). Engineered reinforcement, not
+        pleasure. Returns the whole-window spike counts."""
+        b = self.brain
+        b.weights_frozen = not learning
+        pulse_ms = min(int(pulse_ms), int(window_ms)) if reward else 0
+        total = np.zeros(b.n, dtype=np.int32)
+        if pulse_ms:
+            c, _ = b.rgb_step(frame, float(pulse_ms), learning=learning, stimulation=(b.circuit["reward"], pulse_current))
+            total += c
+        if window_ms - pulse_ms > 0:
+            c, _ = b.rgb_step(frame, float(window_ms - pulse_ms), learning=learning)
+            total += c
+        b.counts[:] = total
+        mem = b.memory()
+        return {
+            "counts": total.astype(np.int32),
+            "neural_time_ms": decimal_str(b.sim_ms),
+            "reward_spikes": int(total[b.circuit["reward"]].sum()),
+            "kc_spikes": int(total[b.circuit["kc"]].sum()),
+            "memory": {"plastic_edges": int(mem["plastic_edges"]), "changed_edges": int(mem["changed_edges"]), "sha256": mem["sha256"], "mean_efficacy": decimal_str(mem["mean_efficacy"])},
+            "stimulus_ms": pulse_ms,
         }
 
     def evaluate(self, frame: np.ndarray, window_ms: int) -> tuple:
