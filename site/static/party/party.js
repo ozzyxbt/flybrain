@@ -6,24 +6,36 @@
   const stage = document.getElementById("stage3d");
   if (!window.THREE || !window.FLYLIB) { $("#state").textContent = "three.js / flylib failed to load"; return; }
   const T = window.THREE, L = window.FLYLIB;
-  const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x05020a, exposure: 1.1, fov: 30, fill: true });
+  const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x3a2a5e, exposure: 1.15, fov: 30, fill: true });
   camera.position.set(1.2, 3.9, -9.0); camera.lookAt(-0.1, 1.0, 0.7);
-  scene.fog = new T.Fog(0x05020a, 8, 16);
-  key.intensity = 0.55; spot.intensity = 2.2; spot.color.set(0xfff0ff);
+  scene.fog = new T.Fog(0x4a3470, 9, 20);
+  key.intensity = 0.7; key.color.set(0xffd9c2); spot.intensity = 2.0; spot.color.set(0xffe0f0);
   const M = (o) => new T.MeshStandardMaterial(o);
 
   // ------------------------------------------------------------- club
-  const floor = new T.Mesh(new T.PlaneGeometry(20, 14), M({ color: 0x0a0616, roughness: 0.35, metalness: 0.4 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  const grid = new T.GridHelper(20, 40, 0x3b1d6e, 0x1c0e38); grid.position.y = 0.005; scene.add(grid);
-  const wall = new T.Mesh(new T.PlaneGeometry(20, 9), M({ color: 0x0b0618, roughness: 1 })); wall.position.set(0, 4.5, 3.6); wall.rotation.y = Math.PI; scene.add(wall);
-  for (const [y, c] of [[2.2, 0xff4fd8], [2.35, 0x4ff2ff], [2.5, 0xc8ff5a]]) { const s = new T.Mesh(new T.PlaneGeometry(20, 0.05), M({ color: c, emissive: c, emissiveIntensity: 1.2 })); s.position.set(0, y, 3.59); s.rotation.y = Math.PI; scene.add(s); }
+  const floor = new T.Mesh(new T.PlaneGeometry(20, 14), M({ color: 0x2c2150, roughness: 0.4, metalness: 0.35 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const grid = new T.GridHelper(20, 40, 0x8a5aa8, 0x4a3a78); grid.position.y = 0.005; scene.add(grid);
+  // sunset backdrop behind the bar: coral sky, big low sun, palm silhouettes
+  const sky = document.createElement("canvas"); sky.width = 1024; sky.height = 512;
+  { const g = sky.getContext("2d"); const grad = g.createLinearGradient(0, 0, 0, 512); grad.addColorStop(0, "#eb9998"); grad.addColorStop(0.35, "#d98aa9"); grad.addColorStop(0.62, "#a373c0"); grad.addColorStop(0.85, "#6f70a2"); grad.addColorStop(1, "#5d649c"); g.fillStyle = grad; g.fillRect(0, 0, 1024, 512);
+    const sun = g.createRadialGradient(560, 330, 10, 560, 330, 150); sun.addColorStop(0, "#fff0c8"); sun.addColorStop(0.35, "#ffc2a0"); sun.addColorStop(1, "rgba(255,170,160,0)"); g.fillStyle = sun; g.fillRect(360, 150, 400, 380);
+    g.fillStyle = "#ffdcb0"; g.beginPath(); g.arc(560, 330, 62, 0, Math.PI * 2); g.fill();
+    for (let i = 0; i < 5; i++) { g.fillStyle = "rgba(93,100,156,0.55)"; g.fillRect(0, 300 + i * 12, 1024, 3); }
+    g.fillStyle = "#3a2a5e";
+    const palm = (x, h, lean) => { g.beginPath(); g.moveTo(x, 512); g.quadraticCurveTo(x + lean * 0.5, 512 - h * 0.6, x + lean, 512 - h); g.lineTo(x + lean + 8, 512 - h); g.quadraticCurveTo(x + lean * 0.5 + 8, 512 - h * 0.6, x + 10, 512); g.fill();
+      for (let a = -2.6; a <= 0.4; a += 0.45) { g.beginPath(); g.ellipse(x + lean + 4 + Math.cos(a) * 40, 512 - h - 4 + Math.sin(a) * 26, 46, 9, a, 0, Math.PI * 2); g.fill(); } };
+    palm(120, 300, 28); palm(250, 230, -18); palm(820, 320, -30); palm(940, 240, 14);
+    g.fillStyle = "#3a2a5e"; for (let x = 0; x < 1024; x += 1) { const h = 20 + 18 * Math.abs(Math.sin(x * 0.02)) + 10 * Math.abs(Math.sin(x * 0.11)); g.fillRect(x, 512 - h, 1, h); } }
+  const skyTex = new T.CanvasTexture(sky); skyTex.colorSpace = T.SRGBColorSpace;
+  const wall = new T.Mesh(new T.PlaneGeometry(20, 10), new T.MeshBasicMaterial({ map: skyTex })); wall.position.set(0, 4.5, 3.62); wall.rotation.y = Math.PI; scene.add(wall);
+  for (const [y, c] of [[2.2, 0xeb9998], [2.35, 0xffd27a], [2.5, 0xa373c0]]) { const s = new T.Mesh(new T.PlaneGeometry(20, 0.05), M({ color: c, emissive: c, emissiveIntensity: 1.2 })); s.position.set(0, y, 3.59); s.rotation.y = Math.PI; scene.add(s); }
   // bar counter, shelves and bottles behind the fly; hanging lamps over the table
-  const counter = new T.Mesh(new T.BoxGeometry(7.5, 1.05, 0.9), M({ color: 0x1a1030, roughness: 0.5, metalness: 0.2 })); counter.position.set(0, 0.52, 3.0); counter.castShadow = true; scene.add(counter);
-  const counterTop = new T.Mesh(new T.BoxGeometry(7.6, 0.06, 1.0), M({ color: 0x4ff2ff, emissive: 0x4ff2ff, emissiveIntensity: 0.5 })); counterTop.position.set(0, 1.07, 3.0); scene.add(counterTop);
-  for (const y of [1.9, 2.55]) { const shelf = new T.Mesh(new T.BoxGeometry(6.4, 0.05, 0.35), M({ color: 0x2a1a4a })); shelf.position.set(0, y, 3.42); scene.add(shelf);
-    const glowStrip = new T.Mesh(new T.PlaneGeometry(6.4, 0.03), M({ color: 0xff4fd8, emissive: 0xff4fd8, emissiveIntensity: 1.5 })); glowStrip.position.set(0, y - 0.03, 3.24); scene.add(glowStrip); }
+  const counter = new T.Mesh(new T.BoxGeometry(7.5, 1.05, 0.9), M({ color: 0x4a2a55, roughness: 0.5, metalness: 0.2 })); counter.position.set(0, 0.52, 3.0); counter.castShadow = true; scene.add(counter);
+  const counterTop = new T.Mesh(new T.BoxGeometry(7.6, 0.06, 1.0), M({ color: 0xffd27a, emissive: 0xffb98a, emissiveIntensity: 0.5 })); counterTop.position.set(0, 1.07, 3.0); scene.add(counterTop);
+  for (const y of [1.9, 2.55]) { const shelf = new T.Mesh(new T.BoxGeometry(6.4, 0.05, 0.35), M({ color: 0x5a3a6a })); shelf.position.set(0, y, 3.42); scene.add(shelf);
+    const glowStrip = new T.Mesh(new T.PlaneGeometry(6.4, 0.03), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 1.5 })); glowStrip.position.set(0, y - 0.03, 3.24); scene.add(glowStrip); }
   // back-bar: mirror panel with warm backlight, real bottle silhouettes with labels, hanging glasses
-  const backPanel = new T.Mesh(new T.PlaneGeometry(6.6, 1.9), M({ color: 0x1b1238, metalness: 0.9, roughness: 0.25 })); backPanel.position.set(0, 2.55, 3.58); backPanel.rotation.y = Math.PI; scene.add(backPanel);
+  const backPanel = new T.Mesh(new T.PlaneGeometry(6.6, 1.9), M({ color: 0x7e3a63, metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0.85 })); backPanel.position.set(0, 2.55, 3.58); backPanel.rotation.y = Math.PI; scene.add(backPanel);
   for (let i = 0; i < 7; i++) { const bl = new T.Mesh(new T.PlaneGeometry(0.04, 1.8), M({ color: 0xffb84f, emissive: 0xffb84f, emissiveIntensity: 0.9, transparent: true, opacity: 0.55 })); bl.position.set(-3.0 + i * 1.0, 2.55, 3.57); bl.rotation.y = Math.PI; scene.add(bl); }
   const bottleColors = [0x1f7a3a, 0xb86a1c, 0x8a1c2c, 0x2b5fb8, 0x5a2a8a, 0xd9c47a, 0x1d7c86, 0x9b3d5a, 0x6b8f2a, 0xc0562b];
   const glassMat = (col) => new T.MeshPhysicalMaterial({ color: col, transparent: true, opacity: 0.72, roughness: 0.12, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.1 });
@@ -43,11 +55,11 @@
   // beer tap on the counter, and two stools
   const tapBase = new T.Mesh(new T.CylinderGeometry(0.06, 0.09, 0.42, 12), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.25 })); tapBase.position.set(-2.2, 1.31, 2.75); scene.add(tapBase);
   const tapArm = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, 0.32, 8), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.25 })); tapArm.position.set(-2.2, 1.52, 2.6); tapArm.rotation.x = Math.PI / 2.4; scene.add(tapArm);
-  const tapHandle = new T.Mesh(new T.CylinderGeometry(0.035, 0.05, 0.22, 10), M({ color: 0xff4fd8, emissive: 0xff4fd8, emissiveIntensity: 0.4 })); tapHandle.position.set(-2.2, 1.62, 2.72); scene.add(tapHandle);
-  for (const x of [-1.2, 2.2]) { const seat = new T.Mesh(new T.CylinderGeometry(0.28, 0.28, 0.08, 20), M({ color: 0xe11d48, roughness: 0.6 })); seat.position.set(x, 0.72, 2.25); seat.castShadow = true; scene.add(seat);
+  const tapHandle = new T.Mesh(new T.CylinderGeometry(0.035, 0.05, 0.22, 10), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 0.4 })); tapHandle.position.set(-2.2, 1.62, 2.72); scene.add(tapHandle);
+  for (const x of [-1.2, 2.2]) { const seat = new T.Mesh(new T.CylinderGeometry(0.28, 0.28, 0.08, 20), M({ color: 0xeb9998, roughness: 0.6 })); seat.position.set(x, 0.72, 2.25); seat.castShadow = true; scene.add(seat);
     const post = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.7, 8), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.3 })); post.position.set(x, 0.35, 2.25); scene.add(post);
     const foot = new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.03, 20), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.3 })); foot.position.set(x, 0.015, 2.25); scene.add(foot); }
-  const signCanvas = document.createElement("canvas"); signCanvas.width = 512; signCanvas.height = 128; { const cx = signCanvas.getContext("2d"); cx.font = "900 92px Inter, system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "#ff4fd8"; cx.shadowBlur = 30; cx.fillStyle = "#ff4fd8"; cx.fillText("FLY", 170, 64); cx.shadowColor = "#c8ff5a"; cx.fillStyle = "#c8ff5a"; cx.fillText("PONG", 380, 64); }
+  const signCanvas = document.createElement("canvas"); signCanvas.width = 512; signCanvas.height = 128; { const cx = signCanvas.getContext("2d"); cx.font = "900 92px Inter, system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "#ff7ab6"; cx.shadowBlur = 30; cx.fillStyle = "#fff4f1"; cx.fillText("FLY", 170, 64); cx.shadowColor = "#ffd27a"; cx.fillStyle = "#ffd27a"; cx.fillText("PONG", 380, 64); }
   const signTex = new T.CanvasTexture(signCanvas); signTex.colorSpace = T.SRGBColorSpace;
   const sign = new T.Mesh(new T.PlaneGeometry(3.2, 0.8), new T.MeshBasicMaterial({ map: signTex, transparent: true })); sign.position.set(0, 3.25, 3.55); sign.rotation.y = Math.PI; scene.add(sign);
   for (const x of [-1.6, 0, 1.6]) { const cord = new T.Mesh(new T.CylinderGeometry(0.008, 0.008, 1.2, 4), M({ color: 0x555577 })); cord.position.set(x, 4.4, -0.6); scene.add(cord);
@@ -56,14 +68,14 @@
     const pl = new T.PointLight(0xffd27a, 0.7, 4); pl.position.set(x, 3.6, -0.6); scene.add(pl); }
   // disco lights
   const discoLights = [];
-  for (const [c, off] of [[0xff4fd8, 0], [0x4ff2ff, 2.1], [0xc8ff5a, 4.2]]) {
+  for (const [c, off] of [[0xeb9998, 0], [0xa373c0, 2.1], [0xffd27a, 4.2]]) {
     const l = new T.SpotLight(c, 1.6, 12, 0.35, 0.5, 1.4); l.position.set(0, 4.6, 0); l.target.position.set(0, 0, 0); scene.add(l, l.target); discoLights.push({ l, off });
   }
   const ballMirror = new T.Mesh(new T.SphereGeometry(0.28, 20, 14), M({ color: 0xffffff, metalness: 1, roughness: 0.15, flatShading: true })); ballMirror.position.set(0, 4.3, -0.4); scene.add(ballMirror);
   const chain = new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 1.2, 6), M({ color: 0x8888aa })); chain.position.set(0, 5.0, -0.4); scene.add(chain);
   // table (long axis z), neon edge
-  const table = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 5.2), M({ color: 0x142a5a, roughness: 0.6 })); table.position.set(0, 0.84, -0.5); table.castShadow = true; table.receiveShadow = true; scene.add(table);
-  const edge = new T.Mesh(new T.BoxGeometry(2.52, 0.06, 5.32), M({ color: 0x4ff2ff, emissive: 0x4ff2ff, emissiveIntensity: 0.9 })); edge.position.set(0, 0.79, -0.5); scene.add(edge);
+  const table = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 5.2), M({ color: 0x5d649c, roughness: 0.6 })); table.position.set(0, 0.84, -0.5); table.castShadow = true; table.receiveShadow = true; scene.add(table);
+  const edge = new T.Mesh(new T.BoxGeometry(2.52, 0.06, 5.32), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 0.9 })); edge.position.set(0, 0.79, -0.5); scene.add(edge);
   for (const [x, z] of [[-1.05, 1.9], [1.05, 1.9], [-1.05, -2.9], [1.05, -2.9]]) { const leg = new T.Mesh(new T.BoxGeometry(0.12, 0.8, 0.12), M({ color: 0x0f0a22 })); leg.position.set(x, 0.4, z); scene.add(leg); }
   const midline = new T.Mesh(new T.PlaneGeometry(2.3, 0.03), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 })); midline.rotation.x = -Math.PI / 2; midline.position.set(0, 0.905, -0.5); scene.add(midline);
   // cups
@@ -133,7 +145,7 @@
     const ring = $("#dopa-ring"); if (ring) ring.style.transform = `rotate(${Math.min(360, hz * 6)}deg)`;
   }
   function setCups(list) { const want = new Set(list.map(cupKey)); for (const [k, g] of cups) if (!want.has(k)) { scene.remove(g); cups.delete(k); } for (const c of list) if (!cups.has(cupKey(c))) cups.set(cupKey(c), makeCup(c)); S.cups = list.length; }
-  function spawnConfetti(n) { for (let k = 0; k < n; k++) { const m = new T.Mesh(new T.BoxGeometry(0.04, 0.06, 0.01), new T.MeshBasicMaterial({ color: [0xc8ff5a, 0x4ff2ff, 0xff4fd8, 0xffb84f][k % 4] })); m.position.set((Math.random() - 0.5) * 5, 3.5 + Math.random() * 1.5, (Math.random() - 0.5) * 4 - 0.5); m.userData = { v: 0.01 + Math.random() * 0.02, r: Math.random() * 0.2 }; scene.add(m); S.confetti.push(m); } }
+  function spawnConfetti(n) { for (let k = 0; k < n; k++) { const m = new T.Mesh(new T.BoxGeometry(0.04, 0.06, 0.01), new T.MeshBasicMaterial({ color: [0xffd27a, 0xa373c0, 0xeb9998, 0xfff4f1][k % 4] })); m.position.set((Math.random() - 0.5) * 5, 3.5 + Math.random() * 1.5, (Math.random() - 0.5) * 4 - 0.5); m.userData = { v: 0.01 + Math.random() * 0.02, r: Math.random() * 0.2 }; scene.add(m); S.confetti.push(m); } }
   function splash(x, z) { const m = new T.Mesh(new T.RingGeometry(0.05, 0.2, 24), new T.MeshBasicMaterial({ color: 0xffb84f, transparent: true, opacity: 0.9, side: T.DoubleSide })); m.rotation.x = -Math.PI / 2; m.position.set(x, 1.25, z); scene.add(m); S.splashes.push({ mesh: m, t0: now() }); }
 
   // ------------------------------------------------------------- events
@@ -150,7 +162,7 @@
     if (g !== S.gen) return;
     setActivity(spikes); readout(a);
     $("#cns-rates").textContent = `DNp20 L ${parseFloat(a.left_hz).toFixed(1)} · R ${parseFloat(a.right_hz).toFixed(1)} Hz · gate ${a.gate_spikes}`;
-    if (a.reward_applied_ms) { S.hot = now(); flash(500); banner(`✨ DOPAMINE · PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz`, "#ff4fd8", 1600); feed(`✨ dopamine: PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz after the hit`, "dopa"); S.fly.mode = "party"; await sleep(900); S.fly.mode = "idle"; }
+    if (a.reward_applied_ms) { S.hot = now(); flash(500); banner(`✨ DOPAMINE · PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz`, "#ff7ab6", 1600); feed(`✨ dopamine: PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz after the hit`, "dopa"); S.fly.mode = "party"; await sleep(900); S.fly.mode = "idle"; }
     if (g !== S.gen) return;
     await sleep(500);
     if (g !== S.gen) return;
@@ -162,7 +174,7 @@
     if (a.hit) {
       const g = cups.get(cupKey(a.cup)); if (g) { splash(g.position.x, g.position.z); g.userData.sink = now(); }
       S.hits++; spawnConfetti(80); flash(300);
-      banner(`🎯 HIT · cup ${a.cup[0]} row ${a.cup[1]}`, "#c8ff5a", 1400); feed(`🎯 throw ${a.throw}: hit cup (${a.cup[0]}, row ${a.cup[1]})`, "hit");
+      banner(`🎯 HIT · cup ${a.cup[0]} row ${a.cup[1]}`, "#ffd27a", 1400); feed(`🎯 throw ${a.throw}: hit cup (${a.cup[0]}, row ${a.cup[1]})`, "hit");
       say("LET'S GOOO", 1200); S.fly.mode = "party"; await sleep(1200); S.fly.mode = "idle";
       if (g !== S.gen) return;
       setCups(a.cups_after); score(a.throw);
@@ -189,13 +201,13 @@
       if (g !== S.gen) return;
       setActivity(spikes); $("#cns-rates").textContent = `calibration · L ${parseFloat(a.left_hz).toFixed(1)} · R ${parseFloat(a.right_hz).toFixed(1)} Hz`; $("#hz-l").textContent = parseFloat(a.left_hz).toFixed(1) + " Hz"; $("#hz-r").textContent = parseFloat(a.right_hz).toFixed(1) + " Hz";
       $("#readout-note").textContent = `calibration · R−L ${parseFloat(a.bias_hz).toFixed(1)} Hz becomes the aim zero`;
-      banner(`🎯 calibration · aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`, "#4ff2ff", 2000); feed(`🎯 calibration on the empty table: aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`);
+      banner(`🎯 calibration · aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`, "#a373c0", 2000); feed(`🎯 calibration on the empty table: aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`);
       say("empty table. noted.", 1500); await sleep(2000); return;
     }
     if (ev.type === "throw") return runThrow(a);
     if (ev.type === "result") {
       state(a.result);
-      banner(`${a.result === "TABLE CLEARED" ? "🏆" : a.result === "PASSED OUT" ? "😵" : "⏱"} ${a.result} · ${a.hits}/${a.throws} · ${a.drinks} drinks`, a.result === "TABLE CLEARED" ? "#c8ff5a" : "#ffb84f", 6000);
+      banner(`${a.result === "TABLE CLEARED" ? "🏆" : a.result === "PASSED OUT" ? "😵" : "⏱"} ${a.result} · ${a.hits}/${a.throws} · ${a.drinks} drinks`, a.result === "TABLE CLEARED" ? "#ffd27a" : "#ffb98a", 6000);
       feed(`${a.result}: ${a.hits} hits in ${a.throws} throws, ${a.drinks} drinks`);
       if (a.result === "TABLE CLEARED") { S.fly.mode = "party"; spawnConfetti(200); say("TABLE CLEARED!!!", 4000); }
       else if (a.result === "PASSED OUT") { S.fly.mode = "passout"; say("zzz…", 5000); }
