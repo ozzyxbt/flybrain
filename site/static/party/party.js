@@ -56,7 +56,7 @@
   const tapBase = new T.Mesh(new T.CylinderGeometry(0.06, 0.09, 0.42, 12), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.25 })); tapBase.position.set(-2.2, 1.31, 2.75); scene.add(tapBase);
   const tapArm = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, 0.32, 8), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.25 })); tapArm.position.set(-2.2, 1.52, 2.6); tapArm.rotation.x = Math.PI / 2.4; scene.add(tapArm);
   const tapHandle = new T.Mesh(new T.CylinderGeometry(0.035, 0.05, 0.22, 10), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 0.4 })); tapHandle.position.set(-2.2, 1.62, 2.72); scene.add(tapHandle);
-  for (const x of [-1.2, 2.2]) { const seat = new T.Mesh(new T.CylinderGeometry(0.28, 0.28, 0.08, 20), M({ color: 0xeb9998, roughness: 0.6 })); seat.position.set(x, 0.72, 2.25); seat.castShadow = true; scene.add(seat);
+  for (const x of [-1.2, 2.2]) { const seat = new T.Mesh(new T.CylinderGeometry(0.28, 0.28, 0.08, 20), M({ color: 0xd11f3a, roughness: 0.55 })); seat.position.set(x, 0.72, 2.25); seat.castShadow = true; scene.add(seat);
     const post = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.7, 8), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.3 })); post.position.set(x, 0.35, 2.25); scene.add(post);
     const foot = new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.03, 20), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.3 })); foot.position.set(x, 0.015, 2.25); scene.add(foot); }
   const signCanvas = document.createElement("canvas"); signCanvas.width = 512; signCanvas.height = 128; { const cx = signCanvas.getContext("2d"); cx.font = "900 92px Inter, system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "#ff7ab6"; cx.shadowBlur = 30; cx.fillStyle = "#fff4f1"; cx.fillText("FLY", 170, 64); cx.shadowColor = "#ffd27a"; cx.fillStyle = "#ffd27a"; cx.fillText("PONG", 380, 64); }
@@ -74,7 +74,7 @@
   const ballMirror = new T.Mesh(new T.SphereGeometry(0.28, 20, 14), M({ color: 0xffffff, metalness: 1, roughness: 0.15, flatShading: true })); ballMirror.position.set(0, 4.3, -0.4); scene.add(ballMirror);
   const chain = new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 1.2, 6), M({ color: 0x8888aa })); chain.position.set(0, 5.0, -0.4); scene.add(chain);
   // table (long axis z), neon edge
-  const table = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 5.2), M({ color: 0x5d649c, roughness: 0.6 })); table.position.set(0, 0.84, -0.5); table.castShadow = true; table.receiveShadow = true; scene.add(table);
+  const table = new T.Mesh(new T.BoxGeometry(2.4, 0.12, 5.2), M({ color: 0x1f7a4a, roughness: 0.65 })); table.position.set(0, 0.84, -0.5); table.castShadow = true; table.receiveShadow = true; scene.add(table);
   const edge = new T.Mesh(new T.BoxGeometry(2.52, 0.06, 5.32), M({ color: 0xeb9998, emissive: 0xeb9998, emissiveIntensity: 0.9 })); edge.position.set(0, 0.79, -0.5); scene.add(edge);
   for (const [x, z] of [[-1.05, 1.9], [1.05, 1.9], [-1.05, -2.9], [1.05, -2.9]]) { const leg = new T.Mesh(new T.BoxGeometry(0.12, 0.8, 0.12), M({ color: 0x0f0a22 })); leg.position.set(x, 0.4, z); scene.add(leg); }
   const midline = new T.Mesh(new T.PlaneGeometry(2.3, 0.03), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 })); midline.rotation.x = -Math.PI / 2; midline.position.set(0, 0.905, -0.5); scene.add(midline);
