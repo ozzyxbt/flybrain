@@ -4,6 +4,7 @@
 (function () {
   const $ = (s) => document.querySelector(s);
   const stage = document.getElementById("stage3d");
+  if (new URLSearchParams(location.search).has("record")) document.body.classList.add("record");
   if (!window.THREE || !window.FLYLIB) { $("#state").textContent = "three.js / flylib failed to load"; return; }
   const T = window.THREE, L = window.FLYLIB;
   const { renderer, scene, camera, key, spot } = L.createStage(stage, { background: 0x0a0614, exposure: 1.1, fov: 30, fill: true });

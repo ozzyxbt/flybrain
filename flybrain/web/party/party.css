@@ -120,3 +120,12 @@ body { background: #0c0716; color: var(--ink); font-family: var(--font); font-si
 .party.one .banner { bottom: 86px; }
 .foot { left: 0; right: 0; bottom: 0; border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; font-size: 10px; color: #f3e6f2; line-height: 1.35; padding: 7px 16px; background: rgba(6, 3, 12, 0.94); text-align: center; }
 @media (max-width: 900px) { .brainbox { width: 44%; } .foot { display: none; } }
+
+/* ---- record mode (?record): edge-to-edge stage, no chrome, no radius ---- */
+body.record { overflow: hidden; }
+body.record .top { display: none; }
+body.record .party.one { padding: 0; }
+body.record .party.one .stage-card { height: 100vh; min-height: 0; border-radius: 0; border: 0; box-shadow: none; }
+body.record .bg { display: none; }
+body.record .onebtn { opacity: 0; transition: opacity .25s; }
+body.record #stage3d:hover .onebtn { opacity: 1; }
