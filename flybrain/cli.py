@@ -27,6 +27,11 @@ def main(argv=None):
     serve.add_argument("--port", type=int, default=8787)
     serve.add_argument("--host", default="127.0.0.1")
 
+    party = sub.add_parser("party", help="Serve the beer-pong party app (separate front end) for a game directory")
+    party.add_argument("--run", type=Path, required=True)
+    party.add_argument("--port", type=int, default=8790)
+    party.add_argument("--host", default="127.0.0.1")
+
     render = sub.add_parser("render", help="Render one choice frame to PNG")
     render.add_argument("--manifest", type=Path, default=Path("manifests/genesis-v1.json"))
     render.add_argument("--category", required=True)
@@ -91,6 +96,11 @@ def main(argv=None):
         from .dashboard import serve as serve_fn
 
         serve_fn(a.run, a.host, a.port)
+        return 0
+    if a.command == "party":
+        from .dashboard import serve as serve_fn
+
+        serve_fn(a.run, a.host, a.port, app="party")
         return 0
     if a.command == "render":
         from .choice import manifest as mm

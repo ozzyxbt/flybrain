@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLYPONG</title>
+<link rel="stylesheet" href="/static/party/party.css">
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="noise"></div></div>
+<header class="top">
+  <div class="brand"><span class="logo">FLY<b>PONG</b></span><span class="sub">a fruit-fly connectome vs six cups</span></div>
+  <div class="chips">
+    <span class="chip" id="chip-mode">REPLAY</span>
+    <span class="chip" id="chip-backend">…</span>
+    <span class="chip ok" id="chip-chain">chain …</span>
+  </div>
+</header>
+<main class="party">
+  <section class="stage-card">
+    <div id="stage3d">
+      <div class="score">
+        <div class="stat"><span class="k">THROW</span><span class="v" id="s-throw">—</span></div>
+        <div class="stat"><span class="k">CUPS</span><span class="v lime" id="s-cups">6</span></div>
+        <div class="stat"><span class="k">HITS</span><span class="v pink" id="s-hits">0</span></div>
+        <div class="stat"><span class="k">DRINKS</span><span class="v amber" id="s-drinks">0</span><span class="beers" id="s-beers"></span></div>
+      </div>
+      <div class="state" id="state">warming up…</div>
+      <div class="bubble" id="bubble"></div>
+      <div class="flash" id="flash"></div>
+      <div class="banner" id="banner"></div>
+    </div>
+    <div class="controls">
+      <button class="pill primary" id="play">▶ play</button>
+      <button class="pill" id="step">⏭ next throw</button>
+      <button class="pill" id="end">⏩ ending</button>
+      <div class="speed"><span>speed</span><button class="pill sm" data-speed="0.5">½×</button><button class="pill sm on" data-speed="1">1×</button><button class="pill sm" data-speed="2">2×</button><button class="pill sm" data-speed="4">4×</button></div>
+      <span class="progress" id="progress"></span>
+    </div>
+  </section>
+  <aside class="side">
+    <div class="card dopa">
+      <div class="k">DOPAMINE · PAM11</div>
+      <div class="big" id="dopa-hz">— <small>Hz</small></div>
+      <div class="ring" id="dopa-ring"></div>
+      <div class="meta" id="dopa-note">15 PAM11 neurons · reward current after a hit</div>
+    </div>
+    <div class="card">
+      <div class="k">READOUT · DNp20</div>
+      <div class="bars">
+        <div class="bar"><span>L</span><div class="track"><div class="fill l" id="bar-l"></div></div><em id="hz-l">—</em></div>
+        <div class="bar"><span>R</span><div class="track"><div class="fill r" id="bar-r"></div></div><em id="hz-r">—</em></div>
+      </div>
+      <div class="meta" id="readout-note">gate — · aim —</div>
+    </div>
+    <div class="card cam">
+      <div class="k">FLY CAM · what the network saw</div>
+      <canvas id="flycam" width="320" height="180"></canvas>
+    </div>
+    <div class="card">
+      <div class="k">SPIKES · whole network</div>
+      <div class="big small" id="spikes-total">—</div>
+      <div class="meta" id="brain-stats">loading atlas…</div>
+    </div>
+    <div class="card feed"><div class="k">FEED</div><ul id="feed"></ul></div>
+  </aside>
+</main>
+<footer class="disclosure" id="disclosure">…</footer>
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/flylib.js"></script>
+<script src="/static/party/party.js"></script>
+</body>
+</html>

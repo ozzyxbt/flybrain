@@ -15,7 +15,10 @@ from .commitments.hashchain import walk
 from .commitments.solana_memo import read_commitments
 
 WEB = Path(__file__).with_name("web")
-PAGES = {"/": "index.html", "/live": "index.html", "/choose": "choose.html", "/coin": "coin.html", "/brain": "brain.html", "/pong": "pong.html"}
+PAGES = {"/": "index.html", "/live": "index.html", "/choose": "choose.html", "/coin": "coin.html", "/brain": "brain.html"}
+# The party app is a separate front end (its own look, its own port) over the
+# same read-only run API. It serves a beer-pong game directory.
+PARTY_PAGES = {"/": "party/index.html", "/party": "party/index.html"}
 
 
 def index(run_dir: Path) -> dict:
@@ -65,8 +68,9 @@ def bundle(run_dir: Path) -> bytes:
     return buf.getvalue()
 
 
-def make_handler(run_dir: Path):
+def make_handler(run_dir: Path, pages=None):
     run_dir = Path(run_dir).resolve()
+    pages = pages or PAGES
 
     class Handler(SimpleHTTPRequestHandler):
         def log_message(self, *_):
@@ -82,8 +86,8 @@ def make_handler(run_dir: Path):
 
         def do_GET(self):
             path = self.path.split("?", 1)[0]
-            if path in PAGES:
-                return self._send(200, (WEB / PAGES[path]).read_bytes(), "text/html; charset=utf-8")
+            if path in pages:
+                return self._send(200, (WEB / pages[path]).read_bytes(), "text/html; charset=utf-8")
             if path == "/api/index":
                 return self._send(200, json.dumps(index(run_dir)).encode(), "application/json")
             if path == "/api/verify":
@@ -107,9 +111,10 @@ def make_handler(run_dir: Path):
     return Handler
 
 
-def serve(run_dir, host="127.0.0.1", port=8787, block=True):
-    server = ThreadingHTTPServer((host, port), make_handler(run_dir))
-    print(f"flybrain dashboard: http://{host}:{server.server_address[1]}/choose  (run: {run_dir})", flush=True)
+def serve(run_dir, host="127.0.0.1", port=8787, block=True, app="lab"):
+    pages = PARTY_PAGES if app == "party" else PAGES
+    server = ThreadingHTTPServer((host, port), make_handler(run_dir, pages))
+    print(f"flybrain {app}: http://{host}:{server.server_address[1]}/  (run: {run_dir})", flush=True)
     if block:
         try:
             server.serve_forever()

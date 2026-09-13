@@ -5,7 +5,7 @@
 ```sh
 flybrain pong --out runs/pong-fixture                                   # fixture backend, instant
 flybrain pong --backend malecns-connectome --checkpoint data/checkpoints/genesis.npz --out runs/pong-1
-flybrain serve --run runs/pong-1        # http://127.0.0.1:8787/pong
+flybrain party --run runs/pong-1       # http://127.0.0.1:8790/  (FLYPONG party app, separate front end)
 ```
 
 ## Rules (`flybrain/games/beerpong.py`)
@@ -20,7 +20,7 @@ flybrain serve --run runs/pong-1        # http://127.0.0.1:8787/pong
 | miss | one drink; each drink blurs (box kernel 1 + 4·drinks px) and doubles (shift 4·drinks px, 40 %) the rendered frame the network sees from then on |
 | end | table cleared, 12 throws, or 6 drinks ("passed out") |
 
-Every throw records the exact frame, the whole-network spike array, DNp20/DNpe017 readout, landing point, hit/miss, PAM11 spikes and the plasticity summary, hash-chained like a choice run. The dashboard replays the record: fly-cam shows what the network actually saw (including the drunk degradation), the CNS panel lights the cells that fired, PAM11 cells are marked in magenta and their rate is shown when the reward current was on.
+Every throw records the exact frame, the whole-network spike array, DNp20/DNpe017 readout, landing point, hit/miss, PAM11 spikes and the plasticity summary, hash-chained like a choice run. The FLYPONG party app (`flybrain party`, its own front end and port; the lab dashboard has no game tab) replays the record: club-lit table, disco lights, confetti on hits, a rotating brain hologram beside the table, fly-cam shows what the network actually saw (including the drunk degradation), the CNS panel lights the cells that fired, PAM11 cells are marked in magenta and their rate is shown when the reward current was on.
 
 ## What is real and what is theatre
 
