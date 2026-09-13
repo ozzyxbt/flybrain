@@ -23,7 +23,10 @@ body { background: #07030f; color: var(--ink); font-family: var(--font); font-si
 .chip { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; padding: 6px 12px; border-radius: 999px; background: var(--glass-2); border: 1px solid var(--line); color: var(--muted); backdrop-filter: blur(8px); }
 .chip.ok { color: var(--lime); border-color: rgba(200, 255, 90, 0.4); }
 .chip.warn { color: var(--amber); border-color: rgba(255, 184, 79, 0.4); }
-.party { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.9fr); gap: 18px; padding: 0 28px 28px; max-width: 1500px; margin: 0 auto; }
+.party { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.95fr); gap: 18px; padding: 0 28px 28px; max-width: 1500px; margin: 0 auto; align-items: start; }
+.left { display: grid; gap: 14px; }
+.under { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 980px) { .under { grid-template-columns: 1fr; } }
 @media (max-width: 980px) { .party { grid-template-columns: 1fr; } }
 .stage-card { background: var(--glass); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; backdrop-filter: blur(14px); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
 #stage3d { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #05020a; }
@@ -68,6 +71,18 @@ body { background: #07030f; color: var(--ink); font-family: var(--font); font-si
 .fill { height: 100%; width: 0; border-radius: 999px; transition: width .35s; }
 .fill.l { background: linear-gradient(90deg, #4ff2ff, #2b7bff); } .fill.r { background: linear-gradient(90deg, #ff4fd8, #ff8a4f); }
 .card.cam canvas { display: block; width: 100%; border-radius: 10px; image-rendering: pixelated; background: #000; }
+.card.cns { background: rgba(0, 0, 0, 0.72); padding: 12px 14px 10px; }
+.cns-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.cns-head .k { margin-bottom: 6px; }
+.cns-view { position: relative; margin-bottom: 8px; }
+.cns-view canvas { display: block; width: 100%; aspect-ratio: 2 / 1; background: #000; border-radius: 10px; }
+.cns-view .cap { position: absolute; left: 10px; bottom: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--muted); }
+.card.meter .big { color: var(--lime); text-shadow: 0 0 22px rgba(200, 255, 90, 0.4); }
+.track.tall { height: 14px; margin-top: 10px; }
+.fill.lime { background: linear-gradient(90deg, #c8ff5a, #4ff2ff); }
+.feedlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 160px; overflow: auto; }
+.feedlist li { font-size: 12px; padding: 7px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
+.feedlist li.hit { border-color: rgba(200, 255, 90, 0.45); } .feedlist li.miss { border-color: rgba(255, 184, 79, 0.4); } .feedlist li.dopa { border-color: rgba(255, 79, 216, 0.5); }
 .feed ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 190px; overflow: auto; }
 .feed li { font-size: 13px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
 .feed li.hit { border-color: rgba(200, 255, 90, 0.45); } .feed li.miss { border-color: rgba(255, 184, 79, 0.4); } .feed li.dopa { border-color: rgba(255, 79, 216, 0.5); }

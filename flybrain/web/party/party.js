@@ -1,5 +1,5 @@
-/* FLYPONG party app: a club-lit beer-pong table, the low-poly fly, and a
-   rotating brain hologram beside it. Everything shown is replayed from the
+/* FLYPONG party app: a club-lit beer-pong table, the low-poly fly, and
+   fixed CNS activity views beside it. Everything shown is replayed from the
    hash-chained game record served by /api/index. */
 (function () {
   const $ = (s) => document.querySelector(s);
@@ -49,68 +49,17 @@
   const flyRig = L.buildFly(scene);
   const fly = flyRig.group;
 
-  // ------------------------------------------------------- hologram
-  const holo = new T.Group(); holo.position.set(2.35, 1.95, -0.9); scene.add(holo);
-  const pedestal = new T.Mesh(new T.CylinderGeometry(0.5, 0.62, 0.12, 32), M({ color: 0x120a2a, metalness: 0.6, roughness: 0.3 })); pedestal.position.set(2.35, 0.06, -0.9); scene.add(pedestal);
-  const pedRing = new T.Mesh(new T.TorusGeometry(0.5, 0.02, 8, 48), M({ color: 0x4ff2ff, emissive: 0x4ff2ff, emissiveIntensity: 1.5 })); pedRing.rotation.x = Math.PI / 2; pedRing.position.set(2.35, 0.13, -0.9); scene.add(pedRing);
-  const cone = new T.Mesh(new T.ConeGeometry(0.75, 1.9, 32, 1, true), new T.MeshBasicMaterial({ color: 0x4ff2ff, transparent: true, opacity: 0.06, side: T.DoubleSide, depthWrite: false })); cone.position.set(2.35, 1.08, -0.9); cone.rotation.x = Math.PI; scene.add(cone);
-  const H = { n: 0, cells: null, cur: null, target: null, colors: null, points: null, hi: null, hiIdx: [], hiKinds: [], big: false };
-  function orient(raw, n, ok, schematic) {
-    const pos = new Float32Array(n * 3);
-    if (schematic) { pos.set(raw.subarray(0, n * 3)); return pos; }
-    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
-    for (let i = 0; i < n; i++) if (ok[i]) for (let k = 0; k < 3; k++) { const v = raw[i * 3 + k]; if (v < lo[k]) lo[k] = v; if (v > hi[k]) hi[k] = v; }
-    const ext = [0, 1, 2].map((k) => hi[k] - lo[k]); const order = [0, 1, 2].sort((a, b) => ext[b] - ext[a]); const [Lg, Mx, Sh] = order;
-    const vals = []; for (let i = 0; i < n; i++) if (ok[i]) vals.push(raw[i * 3 + Lg]); vals.sort((a, b) => a - b);
-    const flip = vals[vals.length >> 1] < (lo[Lg] + hi[Lg]) / 2 ? -1 : 1;
-    for (let i = 0; i < n; i++) { pos[i * 3] = raw[i * 3 + Mx]; pos[i * 3 + 1] = flip * raw[i * 3 + Lg]; pos[i * 3 + 2] = raw[i * 3 + Sh]; }
-    return pos;
-  }
-  async function loadHologram(run) {
-    const atlas = await (await fetch("/run/" + run.atlas.path)).json();
-    const raw = new Float32Array(await (await fetch("/run/" + atlas.positions_path)).arrayBuffer());
-    const n = atlas.n; H.n = n; H.cells = atlas.cells; H.big = n >= 1000;
-    const ok = new Uint8Array(n); let okn = 0;
-    for (let i = 0; i < n; i++) if (Number.isFinite(raw[i * 3]) && Number.isFinite(raw[i * 3 + 1]) && Number.isFinite(raw[i * 3 + 2])) { ok[i] = 1; okn++; }
-    const pos = orient(raw, n, ok, atlas.schematic);
-    for (let i = 0; i < n; i++) if (!ok[i]) { pos[i * 3] = 0; pos[i * 3 + 1] = -99; pos[i * 3 + 2] = 0; }
-    H.target = new Float32Array(n); H.cur = new Float32Array(n); H.colors = new Float32Array(n * 3);
-    const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3)); g.setAttribute("color", new T.BufferAttribute(H.colors, 3));
-    H.points = new T.Points(g, new T.PointsMaterial({ size: H.big ? 0.0075 : 0.05, vertexColors: true, transparent: true, opacity: H.big ? 0.75 : 0.95, blending: T.AdditiveBlending, depthWrite: false }));
-    H.points.scale.setScalar(H.big ? 1.15 : 0.8); holo.add(H.points);
-    H.hiIdx = []; H.hiKinds = [];
-    for (const [kind, idxs] of [["left", atlas.cells.left], ["right", atlas.cells.right], ["gate", atlas.cells.gate], ["reward", atlas.cells.reward || []]]) for (const i of idxs) { H.hiIdx.push(i); H.hiKinds.push(kind); }
-    const hp = new Float32Array(H.hiIdx.length * 3); H.hiColors = new Float32Array(H.hiIdx.length * 3);
-    H.hiIdx.forEach((idx, k) => hp.set([pos[idx * 3], pos[idx * 3 + 1], pos[idx * 3 + 2]], k * 3));
-    const hg = new T.BufferGeometry(); hg.setAttribute("position", new T.BufferAttribute(hp, 3)); hg.setAttribute("color", new T.BufferAttribute(H.hiColors, 3));
-    H.hi = new T.Points(hg, new T.PointsMaterial({ size: H.big ? 0.07 : 0.11, vertexColors: true, transparent: true, opacity: 0.95, blending: T.AdditiveBlending, depthWrite: false }));
-    H.hi.scale.copy(H.points.scale); holo.add(H.hi);
-    holo.add(L.label(atlas.schematic ? "FIXTURE · schematic layout" : "MaleCNS v1.0 · " + okn.toLocaleString() + " somata", 1.5, 0.12, "#a79fc9", 0, -0.95, 0));
-    $("#brain-stats").textContent = atlas.schematic ? "fixture backend · schematic layout, not anatomy" : `${okn.toLocaleString()} positioned somata of ${n.toLocaleString()} neurons`;
-    setActivity(null);
-  }
-  const DIM_BIG = [0.16, 0.24, 0.42], DIM_SMALL = [0.03, 0.05, 0.12], HOT = [0.78, 1.0, 0.35], CELL = { left: [0.31, 0.95, 1.0], right: [0.31, 0.95, 1.0], gate: [1.0, 0.72, 0.31], reward: [1.0, 0.31, 0.85] };
+  // -------------------------------------------------- CNS + meter
+  const { CNS, loadAtlas, animateCNS } = L;
   function setActivity(counts) {
-    if (!H.target) return;
-    let max = 1, firing = 0;
-    if (counts) for (let i = 0; i < H.n; i++) { if (counts[i] > max) max = counts[i]; if (counts[i] > 0) firing++; }
-    const lmax = Math.log1p(max);
-    for (let i = 0; i < H.n; i++) H.target[i] = counts ? Math.log1p(counts[i]) / lmax : 0;
-    if (counts) $("#brain-stats").textContent = `${firing.toLocaleString()} of ${H.n.toLocaleString()} cells fired · max ${max} spikes / ${S.run.rules.window_ms} ms`;
-  }
-  function animateHolo(t, dt) {
-    holo.rotation.y += 0.004 * dt / 16;
-    holo.position.y = 1.95 + Math.sin(t / 900) * 0.04;
-    cone.material.opacity = 0.05 + Math.sin(t / 500) * 0.015;
-    if (!H.points) return;
-    const c = H.colors, hc = H.hiColors, DIM = H.big ? DIM_SMALL : DIM_BIG, k = Math.min(1, dt / 220);
-    for (let i = 0; i < H.n; i++) {
-      H.cur[i] += (H.target[i] - H.cur[i]) * k;
-      const v = H.cur[i] * (0.82 + 0.18 * Math.sin(t / 45 + i * 1.7)) * (H.big ? 0.8 : 1);
-      c[i * 3] = DIM[0] + (HOT[0] - DIM[0]) * v; c[i * 3 + 1] = DIM[1] + (HOT[1] - DIM[1]) * v; c[i * 3 + 2] = DIM[2] + (HOT[2] - DIM[2]) * v;
-    }
-    H.hiIdx.forEach((idx, j) => { const b = CELL[H.hiKinds[j]], v = H.cur[idx]; hc[j * 3] = b[0] * (0.4 + 0.6 * v); hc[j * 3 + 1] = b[1] * (0.4 + 0.6 * v); hc[j * 3 + 2] = b[2] * (0.4 + 0.6 * v); });
-    H.points.geometry.attributes.color.needsUpdate = true; H.hi.geometry.attributes.color.needsUpdate = true;
+    L.setActivity(counts);
+    if (!counts) { $("#m-firing").innerHTML = "— <small id=\"m-pct\"></small>"; $("#m-bar").style.width = "0"; $("#m-note").textContent = `cells with ≥ 1 spike in the ${S.run ? S.run.rules.window_ms : 500} ms window`; return; }
+    let firing = 0, max = 0, total = 0;
+    for (let i = 0; i < counts.length; i++) { const v = counts[i]; if (v > 0) firing++; if (v > max) max = v; total += v; }
+    const pct = 100 * firing / counts.length;
+    $("#m-firing").innerHTML = `${firing.toLocaleString()} <small id="m-pct">of ${counts.length.toLocaleString()} · ${pct.toFixed(1)}%</small>`;
+    $("#m-bar").style.width = Math.min(100, pct * (counts.length >= 1000 ? 4 : 1)) + "%";
+    $("#m-note").textContent = `cells with ≥ 1 spike in the ${S.run.rules.window_ms} ms window · max ${max} spikes · ${total.toLocaleString()} total`;
   }
 
   // ------------------------------------------------------------- state
@@ -153,7 +102,7 @@
     say(a.drinks_before >= 4 ? "*hic* …which cup…" : a.drinks_before >= 2 ? "two tables? ok." : "focus.", 900);
     await sleep(400);
     setActivity(spikes); readout(a);
-    $("#spikes-total").textContent = spikes.reduce((s, v) => s + v, 0).toLocaleString();
+    $("#cns-rates").textContent = `DNp20 L ${parseFloat(a.left_hz).toFixed(1)} · R ${parseFloat(a.right_hz).toFixed(1)} Hz · gate ${a.gate_spikes}`;
     if (a.reward_applied_ms) { S.hot = now(); flash(500); banner(`✨ DOPAMINE · PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz`, "#ff4fd8", 1600); feed(`✨ dopamine: PAM11 ${parseFloat(a.reward_hz).toFixed(1)} Hz after the hit`, "dopa"); S.fly.mode = "party"; await sleep(900); S.fly.mode = "idle"; }
     await sleep(500);
     const lx = parseFloat(a.landing_x) * 0.8, tz = a.hit ? cupPos(a.cup)[1] : -2.65;
@@ -182,7 +131,7 @@
     if (ev.type === "calibration") {
       state("CALIBRATING · empty table");
       const [, spikes] = await Promise.all([showFrame(a), parseNpy("/run/" + a.spike_path)]);
-      setActivity(spikes); $("#hz-l").textContent = parseFloat(a.left_hz).toFixed(1) + " Hz"; $("#hz-r").textContent = parseFloat(a.right_hz).toFixed(1) + " Hz";
+      setActivity(spikes); $("#cns-rates").textContent = `calibration · L ${parseFloat(a.left_hz).toFixed(1)} · R ${parseFloat(a.right_hz).toFixed(1)} Hz`; $("#hz-l").textContent = parseFloat(a.left_hz).toFixed(1) + " Hz"; $("#hz-r").textContent = parseFloat(a.right_hz).toFixed(1) + " Hz";
       $("#readout-note").textContent = `calibration · R−L ${parseFloat(a.bias_hz).toFixed(1)} Hz becomes the aim zero`;
       banner(`🎯 calibration · aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`, "#4ff2ff", 2000); feed(`🎯 calibration on the empty table: aim zero ${parseFloat(a.bias_hz).toFixed(1)} Hz`);
       say("empty table. noted.", 1500); await sleep(2000); return;
@@ -240,7 +189,7 @@
     const hot = now() - S.hot < 2500 ? 1 : 0;
     discoLights.forEach(({ l, off }, i) => { const a = t / (hot ? 700 : 2200) + off; l.target.position.set(Math.cos(a) * 2.2, 0.9, Math.sin(a) * 1.8 - 0.5); l.intensity = (hot ? 2.6 : 1.4) + Math.sin(t / 300 + i) * 0.3; });
     ballMirror.rotation.y = t / 4000;
-    animateHolo(t, dt);
+    animateCNS(t, dt);
     headPos.set(f.x, 1.27 + lift + 0.42, 0.45).project(camera);
     const bb = $("#bubble"); bb.style.left = ((headPos.x + 1) / 2 * 100) + "%"; bb.style.top = ((1 - headPos.y) / 2 * 100) + "%";
     renderer.render(scene, camera);
@@ -258,7 +207,8 @@
     const cb = $("#chip-backend"); cb.textContent = S.run.backend === "fixture-brain-v1" ? "FIXTURE BRAIN" : "MaleCNS CONNECTOME"; cb.className = "chip " + (S.run.backend === "fixture-brain-v1" ? "warn" : "ok");
     const cc = $("#chip-chain"); cc.textContent = idx.chain_error ? "CHAIN BROKEN" : `CHAIN OK · ${idx.chain.length}`; cc.className = "chip " + (idx.chain_error ? "warn" : "ok");
     $("#chip-mode").textContent = "REPLAY · " + S.run.run_id;
-    await loadHologram(S.run);
+    CNS.windowMs = S.run.rules.window_ms;
+    await loadAtlas(S.run);
     reset();
     $("#play").onclick = () => { if (S.i >= S.events.length) reset(); S.playing = !S.playing; $("#play").textContent = S.playing ? "⏸ pause" : "▶ play"; if (S.playing) play(); };
     $("#step").onclick = async () => { if (running || S.i >= S.events.length) return; S.playing = false; $("#play").textContent = "▶ play"; running = true; await runEvent(S.events[S.i]); S.i++; running = false; };
