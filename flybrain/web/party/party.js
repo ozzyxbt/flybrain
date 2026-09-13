@@ -22,10 +22,31 @@
   const counterTop = new T.Mesh(new T.BoxGeometry(7.6, 0.06, 1.0), M({ color: 0x4ff2ff, emissive: 0x4ff2ff, emissiveIntensity: 0.5 })); counterTop.position.set(0, 1.07, 3.0); scene.add(counterTop);
   for (const y of [1.9, 2.55]) { const shelf = new T.Mesh(new T.BoxGeometry(6.4, 0.05, 0.35), M({ color: 0x2a1a4a })); shelf.position.set(0, y, 3.42); scene.add(shelf);
     const glowStrip = new T.Mesh(new T.PlaneGeometry(6.4, 0.03), M({ color: 0xff4fd8, emissive: 0xff4fd8, emissiveIntensity: 1.5 })); glowStrip.position.set(0, y - 0.03, 3.24); scene.add(glowStrip); }
-  const bottleColors = [0x22c55e, 0xf59e0b, 0xe11d48, 0x4ff2ff, 0xa855f7, 0xfde68a, 0x38bdf8, 0xff7a95, 0xc8ff5a, 0xf97316];
-  for (let i = 0; i < 20; i++) { const y = i < 10 ? 1.93 : 2.58, x = -2.9 + (i % 10) * 0.64 + (i >= 10 ? 0.3 : 0); const col = bottleColors[(i * 7) % bottleColors.length];
-    const b = new T.Mesh(new T.CylinderGeometry(0.07, 0.09, 0.42, 10), M({ color: col, transparent: true, opacity: 0.8, roughness: 0.2, emissive: col, emissiveIntensity: 0.25 })); b.position.set(x, y + 0.21, 3.42); scene.add(b);
-    const neck = new T.Mesh(new T.CylinderGeometry(0.025, 0.04, 0.16, 8), M({ color: col, transparent: true, opacity: 0.8 })); neck.position.set(x, y + 0.5, 3.42); scene.add(neck); }
+  // back-bar: mirror panel with warm backlight, real bottle silhouettes with labels, hanging glasses
+  const backPanel = new T.Mesh(new T.PlaneGeometry(6.6, 1.9), M({ color: 0x1b1238, metalness: 0.9, roughness: 0.25 })); backPanel.position.set(0, 2.55, 3.58); backPanel.rotation.y = Math.PI; scene.add(backPanel);
+  for (let i = 0; i < 7; i++) { const bl = new T.Mesh(new T.PlaneGeometry(0.04, 1.8), M({ color: 0xffb84f, emissive: 0xffb84f, emissiveIntensity: 0.9, transparent: true, opacity: 0.55 })); bl.position.set(-3.0 + i * 1.0, 2.55, 3.57); bl.rotation.y = Math.PI; scene.add(bl); }
+  const bottleColors = [0x1f7a3a, 0xb86a1c, 0x8a1c2c, 0x2b5fb8, 0x5a2a8a, 0xd9c47a, 0x1d7c86, 0x9b3d5a, 0x6b8f2a, 0xc0562b];
+  const glassMat = (col) => new T.MeshPhysicalMaterial({ color: col, transparent: true, opacity: 0.72, roughness: 0.12, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.1 });
+  const seedB = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+  for (let i = 0; i < 22; i++) {
+    const shelfY = i < 11 ? 1.925 : 2.575, x = -2.95 + (i % 11) * 0.59 + (i >= 11 ? 0.28 : 0), col = bottleColors[(i * 7) % bottleColors.length];
+    const h = 0.34 + seedB(i) * 0.22, r = 0.05 + seedB(i + 40) * 0.02, mat = glassMat(col);
+    const body = new T.Mesh(new T.CylinderGeometry(r, r * 1.02, h, 14), mat); body.position.set(x, shelfY + h / 2, 3.42); body.castShadow = true; scene.add(body);
+    const shoulder = new T.Mesh(new T.CylinderGeometry(0.018, r, 0.09, 14), mat); shoulder.position.set(x, shelfY + h + 0.045, 3.42); scene.add(shoulder);
+    const neckH = 0.14 + seedB(i + 80) * 0.1; const neck = new T.Mesh(new T.CylinderGeometry(0.018, 0.018, neckH, 10), mat); neck.position.set(x, shelfY + h + 0.09 + neckH / 2, 3.42); scene.add(neck);
+    const cap = new T.Mesh(new T.CylinderGeometry(0.022, 0.022, 0.035, 10), M({ color: [0x111111, 0xd4af37, 0xeeeeee][i % 3], metalness: 0.6, roughness: 0.3 })); cap.position.set(x, shelfY + h + 0.09 + neckH + 0.017, 3.42); scene.add(cap);
+    const label = new T.Mesh(new T.PlaneGeometry(r * 1.9, h * 0.42), M({ color: [0xf5efe0, 0x1a1a1a, 0xe8d8b0][i % 3], roughness: 0.9 })); label.position.set(x, shelfY + h * 0.45, 3.42 - r - 0.002); label.rotation.y = Math.PI; scene.add(label);
+    const liquid = new T.Mesh(new T.CylinderGeometry(r * 0.92, r * 0.94, h * (0.35 + seedB(i + 9) * 0.5), 12), M({ color: col, transparent: true, opacity: 0.85, roughness: 0.3 })); liquid.position.set(x, shelfY + liquid.geometry.parameters.height / 2 + 0.01, 3.42); scene.add(liquid);
+  }
+  // hanging glasses under the top shelf
+  for (let i = 0; i < 9; i++) { const g = new T.Mesh(new T.CylinderGeometry(0.075, 0.03, 0.16, 12, 1, true), new T.MeshPhysicalMaterial({ color: 0xdfe9ff, transparent: true, opacity: 0.35, roughness: 0.05, side: T.DoubleSide })); g.position.set(-2.4 + i * 0.6, 2.42, 3.3); g.rotation.x = Math.PI; scene.add(g); }
+  // beer tap on the counter, and two stools
+  const tapBase = new T.Mesh(new T.CylinderGeometry(0.06, 0.09, 0.42, 12), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.25 })); tapBase.position.set(-2.2, 1.31, 2.75); scene.add(tapBase);
+  const tapArm = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, 0.32, 8), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.25 })); tapArm.position.set(-2.2, 1.52, 2.6); tapArm.rotation.x = Math.PI / 2.4; scene.add(tapArm);
+  const tapHandle = new T.Mesh(new T.CylinderGeometry(0.035, 0.05, 0.22, 10), M({ color: 0xff4fd8, emissive: 0xff4fd8, emissiveIntensity: 0.4 })); tapHandle.position.set(-2.2, 1.62, 2.72); scene.add(tapHandle);
+  for (const x of [-1.2, 2.2]) { const seat = new T.Mesh(new T.CylinderGeometry(0.28, 0.28, 0.08, 20), M({ color: 0xe11d48, roughness: 0.6 })); seat.position.set(x, 0.72, 2.25); seat.castShadow = true; scene.add(seat);
+    const post = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.7, 8), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.3 })); post.position.set(x, 0.35, 2.25); scene.add(post);
+    const foot = new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.03, 20), M({ color: 0xd4d4dc, metalness: 0.9, roughness: 0.3 })); foot.position.set(x, 0.015, 2.25); scene.add(foot); }
   const signCanvas = document.createElement("canvas"); signCanvas.width = 512; signCanvas.height = 128; { const cx = signCanvas.getContext("2d"); cx.font = "900 92px Inter, system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "#ff4fd8"; cx.shadowBlur = 30; cx.fillStyle = "#ff4fd8"; cx.fillText("FLY", 170, 64); cx.shadowColor = "#c8ff5a"; cx.fillStyle = "#c8ff5a"; cx.fillText("PONG", 380, 64); }
   const signTex = new T.CanvasTexture(signCanvas); signTex.colorSpace = T.SRGBColorSpace;
   const sign = new T.Mesh(new T.PlaneGeometry(3.2, 0.8), new T.MeshBasicMaterial({ map: signTex, transparent: true })); sign.position.set(0, 3.25, 3.55); sign.rotation.y = Math.PI; scene.add(sign);
@@ -58,14 +79,19 @@
     const beer = new T.Mesh(new T.CircleGeometry(0.145, 18), M({ color: 0xffb84f, emissive: 0xffb84f, emissiveIntensity: 0.35 })); beer.rotation.x = -Math.PI / 2; beer.position.y = 0.335; g.add(beer);
     scene.add(g); return g;
   }
-  const beer = new T.Group(); beer.position.set(0.98, 0.9, -0.2); scene.add(beer);
-  { const b = new T.Mesh(new T.CylinderGeometry(0.2, 0.15, 0.42, 18), M({ color: 0xffb84f, transparent: true, opacity: 0.85, roughness: 0.3 })); b.position.y = 0.21; b.castShadow = true; beer.add(b);
-    const foam = new T.Mesh(new T.CylinderGeometry(0.21, 0.21, 0.06, 18), M({ color: 0xfff7e0 })); foam.position.y = 0.45; beer.add(foam); }
+  const BEER = [0.98, -0.2];
+  const beer = new T.Group(); beer.position.set(BEER[0], 0.9, BEER[1]); scene.add(beer);
+  const beerLiquid = new T.Mesh(new T.CylinderGeometry(0.2, 0.15, 0.42, 18), M({ color: 0xffb84f, transparent: true, opacity: 0.85, roughness: 0.3 })); beerLiquid.position.y = 0.21; beerLiquid.castShadow = true; beer.add(beerLiquid);
+  const beerGlass = new T.Mesh(new T.CylinderGeometry(0.21, 0.16, 0.46, 18, 1, true), new T.MeshPhysicalMaterial({ color: 0xdfe9ff, transparent: true, opacity: 0.25, roughness: 0.05, side: T.DoubleSide })); beerGlass.position.y = 0.23; beer.add(beerGlass);
+  const foam = new T.Mesh(new T.CylinderGeometry(0.21, 0.21, 0.06, 18), M({ color: 0xfff7e0 })); foam.position.y = 0.45; beer.add(foam);
   const ball = new T.Mesh(new T.SphereGeometry(0.06, 16, 12), M({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4 })); ball.castShadow = true; ball.visible = false; scene.add(ball);
   const flyRig = L.buildFly(scene);
   const fly = flyRig.group;
+  // rig: position + yaw + nose pitch (about the fly's lateral axis); the inner group keeps the drunk sway
+  const rig = new T.Group(); rig.rotation.order = "YZX"; scene.add(rig); rig.add(fly);
   fly.scale.setScalar(0.95 * 0.85 * 0.9);
   const FLY_Z = 1.15; // near the fly's end of the table
+  const f_z = () => S.fly.z;
 
   // -------------------------------------------------- CNS + meter
   const { CNS, loadAtlas, animateCNS } = L;
@@ -81,7 +107,7 @@
   }
 
   // ------------------------------------------------------------- state
-  const S = { gen: 0, events: [], i: 0, playing: false, speed: 1, collapse: 0, fly: { x: 0, target: 0, yaw: Math.PI / 2, targetYaw: Math.PI / 2, mode: "idle", drunk: 0 }, ball: null, splashes: [], confetti: [], run: null, cups: 6, drinks: 0, hits: 0, hot: 0 };
+  const S = { gen: 0, events: [], i: 0, playing: false, speed: 1, collapse: 0, fly: { x: 0, z: 1.15, target: 0, tz: 1.15, yaw: Math.PI / 2, targetYaw: Math.PI / 2, mode: "idle", drunk: 0 }, ball: null, splashes: [], confetti: [], run: null, cups: 6, drinks: 0, hits: 0, hot: 0 };
   const now = () => performance.now();
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms / S.speed));
   function say(t, ms) { const b = $("#bubble"); b.textContent = t; b.style.display = "block"; clearTimeout(say.timer); say.timer = setTimeout(() => (b.style.display = "none"), ms / S.speed); }
@@ -116,7 +142,7 @@
     const g = S.gen;
     state(`THROW ${a.throw} · ${a.cups_before.length} cups · ${a.drinks_before} drinks`);
     setCups(a.cups_before); S.drinks = a.drinks_before; S.fly.drunk = Math.min(1.5, a.drinks_before * 0.3); score(a.throw);
-    S.fly.target = 0; S.fly.mode = "idle";
+    S.fly.target = 0; S.fly.tz = FLY_Z; S.fly.mode = "idle";
     const [, spikes] = await Promise.all([showFrame(a), parseNpy("/run/" + a.spike_path)]);
     if (g !== S.gen) return;
     say(a.drinks_before >= 4 ? "*hic* …which cup…" : a.drinks_before >= 2 ? "two tables? ok." : "focus.", 900);
@@ -129,7 +155,7 @@
     await sleep(500);
     if (g !== S.gen) return;
     const lx = parseFloat(a.landing_x) * 0.8, tz = a.hit ? cupPos(a.cup)[1] : -2.65;
-    S.ball = { t0: now(), dur: 1100 / S.speed, from: [fly.position.x, 1.5, FLY_Z - 0.3], to: [lx, a.hit ? 1.25 : 0.96, tz], hit: a.hit };
+    S.ball = { t0: now(), dur: 1100 / S.speed, from: [rig.position.x, 1.5, f_z() - 0.3], to: [lx, a.hit ? 1.25 : 0.96, tz], hit: a.hit };
     ball.visible = true; S.fly.mode = "press"; say(a.gate_spikes ? "THROW!" : "…gate silent", 800);
     await sleep(1150); ball.visible = false; S.fly.mode = "idle";
     if (g !== S.gen) return;
@@ -144,13 +170,14 @@
       banner(a.gate_spikes ? `💨 miss · landed at ${parseFloat(a.landing_x).toFixed(2)}` : "💨 miss · no gate spike, no throw", "#ffb84f", 1400);
       feed(`🍺 throw ${a.throw}: miss → drink #${a.drinks_after}`, "miss");
       say("ugh. drink.", 1000);
-      S.fly.target = 0.7; S.fly.mode = "walk"; await sleep(900);
+      // walk to the beer, lean the head into the glass, drink some of it
+      S.fly.target = BEER[0] - 0.34; S.fly.tz = BEER[1] + 0.02; S.fly.mode = "walk"; await sleep(1400);
       if (g !== S.gen) return;
-      S.fly.mode = "drink"; say("*glug glug*", 1300); await sleep(1300);
+      S.fly.mode = "drink"; say("*glug glug*", 1300); beerLiquid.scale.y = Math.max(0.15, 1 - 0.14 * a.drinks_after); beerLiquid.position.y = 0.21 * beerLiquid.scale.y; foam.position.y = 0.42 * beerLiquid.scale.y + 0.03; await sleep(1300);
       if (g !== S.gen) return;
       S.drinks = a.drinks_after; S.fly.drunk = Math.min(1.5, S.drinks * 0.3); score(a.throw);
       say(S.drinks >= 4 ? "*hic*" : S.drinks >= 2 ? "whoa." : "fine.", 900);
-      S.fly.mode = "idle"; S.fly.target = 0; await sleep(700);
+      S.fly.mode = "idle"; S.fly.target = 0; S.fly.tz = FLY_Z; await sleep(700);
       if (g !== S.gen) return;
     }
   }
@@ -184,7 +211,7 @@
     if (S.i >= S.events.length) { S.playing = false; $("#play").textContent = "↺ replay"; }
     running = false;
   }
-  function reset() { S.gen++; S.i = 0; S.drinks = 0; S.hits = 0; S.fly.drunk = 0; S.fly.mode = "idle"; S.collapse = 0; setCups(S.run.rules.cups); score(null); setActivity(null); readout(null); $("#feed").innerHTML = ""; state("ready"); }
+  function reset() { S.gen++; S.i = 0; S.drinks = 0; S.hits = 0; S.fly.drunk = 0; S.fly.mode = "idle"; S.collapse = 0; S.fly.tz = FLY_Z; beerLiquid.scale.y = 1; beerLiquid.position.y = 0.21; foam.position.y = 0.45; setCups(S.run.rules.cups); score(null); setActivity(null); readout(null); $("#feed").innerHTML = ""; state("ready"); }
   function skipToEnd() {
     S.playing = false; S.gen++;
     const last = [...S.events].reverse().find((e) => e.type === "throw"), res = S.events.find((e) => e.type === "result");
@@ -197,23 +224,23 @@
   let last = now(); const headPos = new T.Vector3();
   function loop(t) {
     const dt = Math.min(50, t - last); last = t;
-    const f = S.fly, dx = f.target - f.x, moving = Math.abs(dx) > 0.02;
+    const f = S.fly, dx = f.target - f.x, dz = f.tz - f.z, dist = Math.hypot(dx, dz), moving = dist > 0.02;
     const stagger = f.drunk ? Math.sin(t / 180) * 0.012 * f.drunk : 0;
-    if (moving) f.x += Math.sign(dx) * Math.min(Math.abs(dx), (0.022 - 0.006 * Math.min(1, f.drunk)) * S.speed * dt / 16) + stagger;
-    if (moving) f.targetYaw = dx > 0 ? 0 : Math.PI; else if (f.mode === "party") f.targetYaw = f.yaw + 0.1 * S.speed; else if (f.mode === "drink") f.targetYaw = 0; else f.targetYaw = Math.PI / 2;
+    if (moving) { const step = Math.min(dist, (0.022 - 0.006 * Math.min(1, f.drunk)) * S.speed * dt / 16); f.x += dx / dist * step + stagger; f.z += dz / dist * step; }
+    if (moving) f.targetYaw = Math.atan2(-dz, dx); else if (f.mode === "party") f.targetYaw = f.yaw + 0.1 * S.speed; else if (f.mode === "drink") f.targetYaw = 0; else f.targetYaw = Math.PI / 2;
     let dyaw = ((f.targetYaw - f.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
     f.yaw += Math.abs(dyaw) < 0.02 ? dyaw : Math.sign(dyaw) * Math.min(Math.abs(dyaw), 0.16 * S.speed * dt / 16);
     let lift = 0, pitch = 0;
     if (moving) lift = Math.abs(Math.sin(t / 70)) * 0.02;
     if (f.mode === "party") lift = Math.abs(Math.sin(t / 130)) * 0.45;
     if (f.mode === "press") { lift = 0.08; pitch = -0.35; }
-    if (f.mode === "drink") pitch = 0.55 + Math.sin(t / 150) * 0.05;
+    if (f.mode === "drink") { pitch = 0.7 + Math.sin(t / 150) * 0.06; lift = 0.02; }
     // pass-out: legs splay, body sinks face-down onto the table (no rolling)
     S.collapse += ((f.mode === "passout" ? 1 : 0) - S.collapse) * Math.min(1, dt / 450);
     const c = S.collapse;
-    fly.position.set(f.x, 1.25 + lift - 0.18 * c, FLY_Z); fly.rotation.y = f.yaw; fly.rotation.z = 0;
+    rig.position.set(f.x, 1.25 + lift - 0.18 * c, f.z); rig.rotation.y = f.yaw;
     flyRig.animate(t, moving, f.mode, f.drunk * (1 - c), c);
-    fly.rotation.x += pitch * (1 - c) + 0.22 * c;
+    rig.rotation.z = -(pitch * (1 - c) + 0.22 * c);
     if (S.ball) { const b = S.ball, u = Math.min(1, (now() - b.t0) / b.dur); ball.position.set(b.from[0] + (b.to[0] - b.from[0]) * u, b.from[1] + (b.to[1] - b.from[1]) * u + Math.sin(u * Math.PI) * 1.1, b.from[2] + (b.to[2] - b.from[2]) * u); ball.rotation.x += 0.2; if (u >= 1) S.ball = null; }
     for (const [, g] of cups) if (g.userData.sink) { const u = Math.min(1, (now() - g.userData.sink) / 600); g.scale.set(1 - u * 0.4, 1 - u, 1 - u * 0.4); }
     for (let i = S.splashes.length - 1; i >= 0; i--) { const s = S.splashes[i], u = (now() - s.t0) / 700; if (u >= 1) { scene.remove(s.mesh); S.splashes.splice(i, 1); continue; } s.mesh.scale.setScalar(1 + u * 3); s.mesh.material.opacity = 0.9 * (1 - u); }
@@ -223,7 +250,7 @@
     discoLights.forEach(({ l, off }, i) => { const a = t / (hot ? 700 : 2200) + off; l.target.position.set(Math.cos(a) * 2.2, 0.9, Math.sin(a) * 1.8 - 0.5); l.intensity = (hot ? 2.6 : 1.4) + Math.sin(t / 300 + i) * 0.3; });
     ballMirror.rotation.y = t / 4000;
     animateCNS(t, dt);
-    headPos.set(f.x, 1.25 + lift + 0.38, FLY_Z).project(camera);
+    headPos.set(f.x, 1.25 + lift + 0.38, f.z).project(camera);
     const bb = $("#bubble"); bb.style.left = ((headPos.x + 1) / 2 * 100) + "%"; bb.style.top = ((1 - headPos.y) / 2 * 100) + "%";
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
